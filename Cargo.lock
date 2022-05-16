@@ -1057,6 +1057,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tasklist-cli"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "tasklists",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "tasklist-server"
 version = "0.1.0"
 dependencies = [
