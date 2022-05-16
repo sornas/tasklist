@@ -12,6 +12,7 @@ pub struct Routine {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TaskList {
+    pub state: State,
     pub tasks: Vec<Task>,
 }
 
@@ -21,12 +22,12 @@ pub struct Task {
     // end: Option<>,
     // length: Option<>,
     // assigned: Option<User>,
-    pub state: TaskState,
+    pub state: State,
     pub name: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum TaskState {
+pub enum State {
     NotStarted,
     Started,
     Paused,
