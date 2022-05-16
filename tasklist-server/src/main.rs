@@ -21,7 +21,7 @@ async fn get_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Re
 
 #[tracing::instrument]
 #[post("/routine/new")]
-async fn post_new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
+async fn add_new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
     let mut routines = tasklists::open().map_err(ErrorInternalServerError)?;
     routines.push(routine.0);
     tasklists::store(routines).map_err(ErrorInternalServerError)?;
@@ -54,9 +54,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(TracingLogger::default())
+            .service(add_new_routine)
             .service(add_task_to_routine)
             .service(get_routine)
-            .service(post_new_routine)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
