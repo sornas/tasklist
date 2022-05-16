@@ -1,7 +1,7 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::http::header::ContentType;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use tasklists::model::{Routine, Task};
+use tasklists::model::{Routine, State, Task};
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
@@ -44,6 +44,22 @@ async fn add_task_to_routine(
     Ok(HttpResponse::Ok())
 }
 
+#[tracing::instrument]
+#[post("/routine/{routine_id}/init")]
+async fn init_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
+    let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
+    let mut routines = tasklists::open().map_err(ErrorInternalServerError)?;
+    let routine = routines
+        .get_mut(routine_id)
+        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
+    let mut model = routine.model.clone();
+    // manually started so mark as started. (a repetition trigger wouldn't mark as started.)
+    model.state = State::Started;
+    routine.task_lists.push(model);
+    tasklists::store(routines).map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok())
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
@@ -57,6 +73,7 @@ async fn main() -> std::io::Result<()> {
             .service(add_new_routine)
             .service(add_task_to_routine)
             .service(get_routine)
+            .service(init_routine)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
