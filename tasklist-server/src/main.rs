@@ -1,7 +1,7 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::http::header::ContentType;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use tasklists::model::Routine;
+use tasklists::model::{Routine, Task};
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
@@ -28,6 +28,22 @@ async fn post_new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl
     Ok(HttpResponse::Ok())
 }
 
+#[tracing::instrument]
+#[post("/routine/{routine_id}/task")]
+async fn add_task_to_routine(
+    routine_id: web::Path<String>,
+    task: web::Json<Task>,
+) -> actix_web::Result<impl Responder> {
+    let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
+    let mut routines = tasklists::open().map_err(ErrorInternalServerError)?;
+    let routine = routines
+        .get_mut(routine_id)
+        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
+    routine.model.tasks.push(task.0);
+    tasklists::store(routines).map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok())
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
@@ -38,6 +54,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(TracingLogger::default())
+            .service(add_task_to_routine)
             .service(get_routine)
             .service(post_new_routine)
     })
