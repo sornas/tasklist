@@ -9,8 +9,9 @@ use tracing_actix_web::TracingLogger;
 #[get("/routine/{routine_id}")]
 async fn get_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
-    let routines = tasklists::open().map_err(ErrorInternalServerError)?;
-    let routine = routines
+    let database = tasklists::open().map_err(ErrorInternalServerError)?;
+    let routine = database
+        .routines
         .get(routine_id)
         .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
     let json = serde_json::to_string(&routine).map_err(ErrorInternalServerError)?;
@@ -22,10 +23,11 @@ async fn get_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Re
 #[tracing::instrument]
 #[post("/routine/new")]
 async fn add_new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
-    let mut routines = tasklists::open().map_err(ErrorInternalServerError)?;
-    routines.push(routine.0);
-    tasklists::store(routines).map_err(ErrorInternalServerError)?;
-    Ok(HttpResponse::Ok())
+    let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
+    let routine_id = database.routines.len();
+    database.routines.push(routine.0);
+    tasklists::store(&database).map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok().body(routine_id.to_string()))
 }
 
 #[tracing::instrument]
@@ -35,12 +37,23 @@ async fn add_task_to_routine(
     task: web::Json<Task>,
 ) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
-    let mut routines = tasklists::open().map_err(ErrorInternalServerError)?;
-    let routine = routines
-        .get_mut(routine_id)
-        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
-    routine.model.tasks.push(task.0);
-    tasklists::store(routines).map_err(ErrorInternalServerError)?;
+
+    let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
+
+    let task_id = database.tasks.len();
+    database.tasks.push(task.0);
+
+    let routine_model = database
+        .routines
+        .get(routine_id)
+        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?
+        .model;
+
+    database.tasklists[routine_model as usize]
+        .tasks
+        .push(task_id as u64);
+
+    tasklists::store(&database).map_err(ErrorInternalServerError)?;
     Ok(HttpResponse::Ok())
 }
 
@@ -48,15 +61,20 @@ async fn add_task_to_routine(
 #[post("/routine/{routine_id}/init")]
 async fn init_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
-    let mut routines = tasklists::open().map_err(ErrorInternalServerError)?;
-    let routine = routines
-        .get_mut(routine_id)
-        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
-    let mut model = routine.model.clone();
-    // manually started so mark as started. (a repetition trigger wouldn't mark as started.)
+
+    let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
+
+    let routine_model = database
+        .routines
+        .get(routine_id)
+        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?
+        .model;
+
+    let mut model = database.tasklists[routine_model as usize].clone();
     model.state = State::Started;
-    routine.task_lists.push(model);
-    tasklists::store(routines).map_err(ErrorInternalServerError)?;
+    database.tasklists.push(model);
+
+    tasklists::store(&database).map_err(ErrorInternalServerError)?;
     Ok(HttpResponse::Ok())
 }
 

@@ -6,6 +6,20 @@ use crate::{parse_repetition, Args, Command, Create, Init};
 pub async fn handle_args(args: &Args) -> Result<()> {
     match &args.command {
         Command::Create(Create::Routine { name, repetition }) => {
+            let model = TaskList {
+                state: State::NotStarted,
+                tasks: vec![],
+            };
+
+            let model_id = reqwest::Client::new()
+                .post("http://localhost:8080/routine/new")
+                .json(&model)
+                .send()
+                .await?
+                .text()
+                .await?
+                .parse()?;
+
             let repetition = repetition
                 .as_deref()
                 .map(parse_repetition)
@@ -15,10 +29,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             let routine = Routine {
                 name: name.to_string(),
                 repetition,
-                model: TaskList {
-                    state: State::NotStarted,
-                    tasks: vec![],
-                },
+                model: model_id,
                 task_lists: vec![],
             };
 
