@@ -4,7 +4,7 @@ use tasklists::model::Repetition;
 use tracing::{event, Level};
 
 mod http;
-mod local;
+// mod local;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -66,7 +66,8 @@ async fn main() -> Result<()> {
     event!(Level::DEBUG, "parsed args {:?}", args);
 
     if args.local {
-        local::handle_args(&args)
+        todo!()
+        // local::handle_args(&args)
     } else {
         http::handle_args(&args).await
     }
