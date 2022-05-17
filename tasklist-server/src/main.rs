@@ -1,11 +1,9 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
-use actix_web::http::header::ContentType;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use tasklists::model::{Routine, State, Task};
+use tasklists::model::{Routine, State, Task, TaskList};
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
-#[tracing::instrument]
 #[get("/routine/{routine_id}")]
 async fn get_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
@@ -14,15 +12,11 @@ async fn get_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Re
         .routines
         .get(routine_id)
         .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
-    let json = serde_json::to_string(&routine).map_err(ErrorInternalServerError)?;
-    Ok(HttpResponse::Ok()
-        .content_type(ContentType::json())
-        .body(json))
+    Ok(HttpResponse::Ok().json(&routine))
 }
 
-#[tracing::instrument]
 #[post("/routine/new")]
-async fn add_new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
+async fn new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
     let routine_id = database.routines.len();
     database.routines.push(routine.0);
@@ -30,7 +24,6 @@ async fn add_new_routine(routine: web::Json<Routine>) -> actix_web::Result<impl 
     Ok(HttpResponse::Ok().body(routine_id.to_string()))
 }
 
-#[tracing::instrument]
 #[post("/routine/{routine_id}/task")]
 async fn add_task_to_routine(
     routine_id: web::Path<String>,
@@ -54,10 +47,9 @@ async fn add_task_to_routine(
         .push(task_id as u64);
 
     tasklists::store(&database).map_err(ErrorInternalServerError)?;
-    Ok(HttpResponse::Ok())
+    Ok(HttpResponse::Ok().body(task_id.to_string()))
 }
 
-#[tracing::instrument]
 #[post("/routine/{routine_id}/init")]
 async fn init_routine(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
@@ -70,12 +62,42 @@ async fn init_routine(routine_id: web::Path<String>) -> actix_web::Result<impl R
         .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?
         .model;
 
-    let mut model = database.tasklists[routine_model as usize].clone();
+    let mut model = database
+        .tasklists
+        .get(routine_model as usize)
+        .ok_or(ErrorNotFound(format!(
+            "Routine {routine_id} refers to non-existant model tasklist {routine_model}"
+        )))?
+        .clone();
     model.state = State::Started;
+
+    let tasklist_id = database.tasklists.len();
     database.tasklists.push(model);
 
     tasklists::store(&database).map_err(ErrorInternalServerError)?;
-    Ok(HttpResponse::Ok())
+    Ok(HttpResponse::Ok().body(tasklist_id.to_string()))
+}
+
+#[get("/tasklist/{tasklist_id}")]
+async fn get_tasklist(tasklist_id: web::Path<String>) -> actix_web::Result<impl Responder> {
+    let tasklist_id: usize = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
+
+    let database = tasklists::open().map_err(ErrorInternalServerError)?;
+    let tasklist = database
+        .tasklists
+        .get(tasklist_id)
+        .ok_or(ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
+
+    Ok(HttpResponse::Ok().json(&tasklist))
+}
+
+#[post("/tasklist/new")]
+async fn new_tasklist(tasklist: web::Json<TaskList>) -> actix_web::Result<impl Responder> {
+    let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
+    let tasklist_id = database.tasklists.len();
+    database.tasklists.push(tasklist.into_inner());
+    tasklists::store(&database).map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok().body(tasklist_id.to_string()))
 }
 
 #[actix_web::main]
@@ -88,9 +110,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(TracingLogger::default())
-            .service(add_new_routine)
             .service(add_task_to_routine)
             .service(get_routine)
+            .service(get_tasklist)
+            .service(new_routine)
+            .service(new_tasklist)
             .service(init_routine)
     })
     .bind(("127.0.0.1", 8080))?

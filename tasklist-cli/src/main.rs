@@ -19,6 +19,8 @@ pub enum Command {
     #[clap(subcommand)]
     Create(Create),
     Init(Init),
+    #[clap(subcommand)]
+    Show(Show),
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -39,6 +41,13 @@ pub enum Create {
 pub struct Init {
     #[clap(long)]
     pub routine: usize,
+}
+
+#[derive(clap::Subcommand, Debug)]
+pub enum Show {
+    TaskList {
+        id: u64,
+    }
 }
 
 #[tokio::main]

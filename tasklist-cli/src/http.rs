@@ -1,7 +1,7 @@
 use color_eyre::eyre::Result;
 use tasklists::model::{Repetition, Routine, State, Task, TaskList};
 
-use crate::{parse_repetition, Args, Command, Create, Init};
+use crate::{parse_repetition, Args, Command, Create, Init, Show};
 
 pub async fn handle_args(args: &Args) -> Result<()> {
     match &args.command {
@@ -12,7 +12,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             };
 
             let model_id = reqwest::Client::new()
-                .post("http://localhost:8080/routine/new")
+                .post("http://localhost:8080/tasklist/new")
                 .json(&model)
                 .send()
                 .await?
@@ -33,7 +33,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 task_lists: vec![],
             };
 
-            let _ = reqwest::Client::new()
+            let _routine = reqwest::Client::new()
                 .post("http://localhost:8080/routine/new")
                 .json(&routine)
                 .send()
@@ -48,7 +48,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 name: name.to_string(),
             };
 
-            let _ = reqwest::Client::new()
+            let _task = reqwest::Client::new()
                 .post(format!("http://localhost:8080/routine/{routine}/task",))
                 .json(&task)
                 .send()
@@ -58,11 +58,22 @@ pub async fn handle_args(args: &Args) -> Result<()> {
         }
 
         Command::Init(Init { routine }) => {
-            let _ = reqwest::Client::new()
-                .post(format!("http://localhost:8080/routine/{routine}/init",))
+            let _tasklist = reqwest::Client::new()
+                .post(format!("http://localhost:8080/routine/{routine}/init"))
                 .send()
                 .await?;
 
+            Ok(())
+        }
+
+        Command::Show(Show::TaskList { id }) => {
+            let tasklist = reqwest::Client::new()
+                .get(format!("http://localhost:8080/tasklist/{id}"))
+                .send()
+                .await?
+                .json::<TaskList>()
+                .await?;
+            println!("{:#?}", tasklist);
             Ok(())
         }
     }

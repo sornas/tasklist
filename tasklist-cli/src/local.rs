@@ -1,7 +1,7 @@
 use color_eyre::eyre::{anyhow, Result};
 use tasklists::model::{Repetition, Routine, State, Task, TaskList};
 
-use crate::{parse_repetition, Args, Command, Create, Init};
+use crate::{parse_repetition, Args, Command, Create, Init, Show};
 
 pub fn handle_args(args: &Args) -> Result<()> {
     match &args.command {
@@ -59,6 +59,10 @@ pub fn handle_args(args: &Args) -> Result<()> {
             // model.state = State::Started;
             // routine.task_lists.push(model);
             // tasklists::store(routines)?;
+        }
+
+        Command::Show(Show::TaskList { id }) => {
+            todo!()
         }
     }
 }
