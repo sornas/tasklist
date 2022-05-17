@@ -15,16 +15,18 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(TracingLogger::default())
-            .service(web::scope("/routine")
-                .service(routine::add_task)
-                .service(routine::get)
-                .service(routine::init)
-                .service(routine::new)
+            .service(
+                web::scope("/routine")
+                    .service(routine::add_task)
+                    .service(routine::get)
+                    .service(routine::init)
+                    .service(routine::new),
             )
-            .service(web::scope("/tasklist")
-                .service(tasklist::get)
-                .service(tasklist::list)
-                .service(tasklist::new)
+            .service(
+                web::scope("/tasklist")
+                    .service(tasklist::get)
+                    .service(tasklist::list)
+                    .service(tasklist::new),
             )
     })
     .bind(("127.0.0.1", 8080))?

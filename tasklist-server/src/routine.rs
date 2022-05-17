@@ -62,7 +62,8 @@ async fn init(routine_id: web::Path<String>) -> actix_web::Result<impl Responder
         .tasklists
         .get(routine.model as usize)
         .ok_or(ErrorNotFound(format!(
-            "Routine {routine_id} refers to non-existant model tasklist {}", routine.model
+            "Routine {routine_id} refers to non-existant model tasklist {}",
+            routine.model
         )))?
         .clone();
     model.state = State::Started;
