@@ -3,7 +3,7 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use tasklists::model::{Routine, State, Task};
 
 #[get("/{routine_id}")]
-pub async fn get(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
+async fn get(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
     let database = tasklists::open().map_err(ErrorInternalServerError)?;
     let routine = database
@@ -14,7 +14,7 @@ pub async fn get(routine_id: web::Path<String>) -> actix_web::Result<impl Respon
 }
 
 #[post("/new")]
-pub async fn new(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
+async fn new(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
     let routine_id = database.routines.len();
     database.routines.push(routine.0);
@@ -23,7 +23,7 @@ pub async fn new(routine: web::Json<Routine>) -> actix_web::Result<impl Responde
 }
 
 #[post("/{routine_id}/task")]
-pub async fn add_task(
+async fn add_task(
     routine_id: web::Path<String>,
     task: web::Json<Task>,
 ) -> actix_web::Result<impl Responder> {
@@ -49,7 +49,7 @@ pub async fn add_task(
 }
 
 #[post("/{routine_id}/init")]
-pub async fn init(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
+async fn init(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
 
     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;

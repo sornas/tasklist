@@ -22,8 +22,9 @@ async fn main() -> std::io::Result<()> {
                 .service(routine::new)
             )
             .service(web::scope("/tasklist")
-                .service(routine::get)
-                .service(routine::new)
+                .service(tasklist::get)
+                .service(tasklist::list)
+                .service(tasklist::new)
             )
     })
     .bind(("127.0.0.1", 8080))?
