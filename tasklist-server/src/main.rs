@@ -55,24 +55,23 @@ async fn init_routine(routine_id: web::Path<String>) -> actix_web::Result<impl R
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
 
     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
-
-    let routine_model = database
+    let routine = database
         .routines
-        .get(routine_id)
-        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?
-        .model;
+        .get_mut(routine_id)
+        .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
 
     let mut model = database
         .tasklists
-        .get(routine_model as usize)
+        .get(routine.model as usize)
         .ok_or(ErrorNotFound(format!(
-            "Routine {routine_id} refers to non-existant model tasklist {routine_model}"
+            "Routine {routine_id} refers to non-existant model tasklist {}", routine.model
         )))?
         .clone();
     model.state = State::Started;
 
     let tasklist_id = database.tasklists.len();
     database.tasklists.push(model);
+    routine.task_lists.push(tasklist_id as u64);
 
     tasklists::store(&database).map_err(ErrorInternalServerError)?;
     Ok(HttpResponse::Ok().body(tasklist_id.to_string()))
