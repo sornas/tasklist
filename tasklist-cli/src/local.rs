@@ -1,5 +1,5 @@
 use color_eyre::eyre::{anyhow, Result};
-use tasklists::model::{Repetition, Routine, State, Task, TaskList};
+use tasklists::model::{Repetition, Routine, State, Task, Tasklist};
 
 use crate::{parse_repetition, Args, Command, Create, Init, Show};
 
@@ -18,7 +18,7 @@ pub fn handle_args(args: &Args) -> Result<()> {
             //     routines.push(Routine {
             //         name: name.to_string(),
             //         repetition,
-            //         model: TaskList {
+            //         model: Tasklist {
             //             state: State::NotStarted,
             //             tasks: vec![],
             //         },
@@ -61,7 +61,7 @@ pub fn handle_args(args: &Args) -> Result<()> {
             // tasklists::store(routines)?;
         }
 
-        Command::Show(Show::TaskList { id }) => {
+        Command::Show(Show::Tasklist { id }) => {
             todo!()
         }
     }

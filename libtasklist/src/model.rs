@@ -5,7 +5,7 @@ pub type Id = u64;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Database {
     pub routines: Vec<Routine>,
-    pub tasklists: Vec<TaskList>,
+    pub tasklists: Vec<Tasklist>,
     pub tasks: Vec<Task>,
 }
 
@@ -27,7 +27,7 @@ pub struct Metadata {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct TaskList {
+pub struct Tasklist {
     pub state: State,
     pub tasks: Vec<Id>,
 }

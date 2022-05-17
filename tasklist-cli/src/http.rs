@@ -1,12 +1,12 @@
 use color_eyre::eyre::Result;
-use tasklists::model::{Repetition, Routine, State, Task, TaskList};
+use tasklists::model::{Repetition, Routine, State, Task, Tasklist};
 
 use crate::{parse_repetition, Args, Command, Create, Init, Show};
 
 pub async fn handle_args(args: &Args) -> Result<()> {
     match &args.command {
         Command::Create(Create::Routine { name, repetition }) => {
-            let model = TaskList {
+            let model = Tasklist {
                 state: State::NotStarted,
                 tasks: vec![],
             };
@@ -66,12 +66,12 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
-        Command::Show(Show::TaskList { id }) => {
+        Command::Show(Show::Tasklist { id }) => {
             let tasklist = reqwest::Client::new()
                 .get(format!("http://localhost:8080/tasklist/{id}"))
                 .send()
                 .await?
-                .json::<TaskList>()
+                .json::<Tasklist>()
                 .await?;
             println!("{:#?}", tasklist);
             Ok(())

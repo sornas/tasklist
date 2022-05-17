@@ -1,6 +1,6 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use tasklists::model::{Routine, State, Task, TaskList};
+use tasklists::model::{Routine, State, Task, Tasklist};
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
@@ -91,7 +91,7 @@ async fn get_tasklist(tasklist_id: web::Path<String>) -> actix_web::Result<impl 
 }
 
 #[post("/tasklist/new")]
-async fn new_tasklist(tasklist: web::Json<TaskList>) -> actix_web::Result<impl Responder> {
+async fn new_tasklist(tasklist: web::Json<Tasklist>) -> actix_web::Result<impl Responder> {
     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
     let tasklist_id = database.tasklists.len();
     database.tasklists.push(tasklist.into_inner());

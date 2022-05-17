@@ -45,7 +45,7 @@ pub struct Init {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Show {
-    TaskList {
+    Tasklist {
         id: u64,
     }
 }
