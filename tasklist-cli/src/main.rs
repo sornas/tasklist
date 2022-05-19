@@ -1,6 +1,6 @@
 use clap::Parser;
 use color_eyre::eyre::{anyhow, Result};
-use tasklists::model::Repetition;
+use tasklists::model::{Repetition, State};
 use tracing::{event, Level};
 
 mod http;
@@ -19,6 +19,7 @@ pub enum Command {
     #[clap(subcommand)]
     Create(Create),
     Init(Init),
+    Mark(Mark),
     #[clap(subcommand)]
     Show(Show),
 }
@@ -41,6 +42,15 @@ pub enum Create {
 pub struct Init {
     #[clap(long)]
     pub routine: usize,
+}
+
+#[derive(clap::Parser, Debug)]
+pub struct Mark {
+    #[clap(long)]
+    task: Option<u64>,
+    #[clap(long)]
+    tasklist: Option<u64>,
+    state: State,
 }
 
 #[derive(clap::Subcommand, Debug)]

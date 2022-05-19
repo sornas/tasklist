@@ -3,6 +3,7 @@ use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
 mod routine;
+mod task;
 mod tasklist;
 
 #[actix_web::main]
@@ -22,6 +23,7 @@ async fn main() -> std::io::Result<()> {
                     .service(routine::init)
                     .service(routine::new),
             )
+            .service(web::scope("/task").service(task::put))
             .service(
                 web::scope("/tasklist")
                     .service(tasklist::get)

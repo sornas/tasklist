@@ -2,6 +2,7 @@ use color_eyre::eyre::Result;
 
 use crate::model::Database;
 
+pub mod command;
 pub mod model;
 
 pub fn open() -> Result<Database> {
