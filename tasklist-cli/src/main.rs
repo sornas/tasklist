@@ -66,9 +66,17 @@ pub enum Remove {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Show {
-    Task { id: u64 },
-    Tasklist { id: Option<u64> },
-    Routine { id: Option<u64> },
+    Task {
+        id: u64,
+    },
+    Tasklist {
+        id: Option<u64>,
+        #[clap(long)]
+        follow_tasks: bool,
+    },
+    Routine {
+        id: Option<u64>,
+    },
 }
 
 #[tokio::main]

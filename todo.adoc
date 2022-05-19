@@ -15,7 +15,7 @@
 - [x] complete a tasklist
 - [x] remove tasks from tasklists (both model and created)
 - [x] list all routines
-- [ ] list all tasks in tasklist and their state
+- [x] list all tasks in tasklist and their state
 - [ ] filter tasks in tasklist by state
 
 == future

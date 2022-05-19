@@ -1,4 +1,4 @@
-use color_eyre::eyre::{anyhow, Result};
+use color_eyre::eyre::{anyhow, Error, Result};
 use tasklists::command;
 use tasklists::model::{Repetition, Routine, State, Task, Tasklist};
 
@@ -153,18 +153,63 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
-        Command::Show(Show::Tasklist { id: Some(id) }) => {
+        Command::Show(Show::Tasklist {
+            id: Some(id),
+            follow_tasks,
+        }) => {
             let tasklist = reqwest::Client::new()
                 .get(format!("http://localhost:8080/tasklist/{id}"))
                 .send()
                 .await?
                 .json::<Tasklist>()
                 .await?;
-            println!("{:#?}", tasklist);
+            if *follow_tasks {
+                let Tasklist {
+                    state,
+                    tasks: tasklist_tasks,
+                } = tasklist;
+                let client = reqwest::Client::new();
+                // https://github.com/rust-lang/rust/issues/62290
+                let mut tasks = Vec::new();
+                for id in tasklist_tasks.iter() {
+                    tasks.push(
+                        async {
+                            Result::<_, Error>::Ok(
+                                client
+                                    .get(format!("http://localhost:8080/task/{id}"))
+                                    .send()
+                                    .await?
+                                    .json::<Task>()
+                                    .await?,
+                            )
+                        }
+                        .await,
+                    );
+                }
+                println!("{:?}", state);
+                println!(
+                    "{:#?}",
+                    tasks
+                        .iter()
+                        .map(|task| match task {
+                            Ok(task) => format!("{task:?}"),
+                            Err(err) => format!("{err}"),
+                        })
+                        .collect::<Vec<_>>()
+                );
+            } else {
+                println!("{:#?}", tasklist);
+            }
             Ok(())
         }
 
-        Command::Show(Show::Tasklist { id: None }) => {
+        Command::Show(Show::Tasklist {
+            id: None,
+            follow_tasks,
+        }) => {
+            if *follow_tasks {
+                return Err(anyhow!("not following tasks when showing all tasklists"));
+            }
             let tasklists = reqwest::Client::new()
                 .get(format!("http://localhost:8080/tasklist"))
                 .send()
