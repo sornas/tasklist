@@ -55,6 +55,7 @@ pub struct Mark {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Show {
+    Task { id: u64 },
     Tasklist { id: u64 },
 }
 

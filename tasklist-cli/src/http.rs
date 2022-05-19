@@ -111,6 +111,17 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
+        Command::Show(Show::Task { id }) => {
+            let task = reqwest::Client::new()
+                .get(format!("http://localhost:8080/task/{id}"))
+                .send()
+                .await?
+                .json::<Task>()
+                .await?;
+            println!("{:#?}", task);
+            Ok(())
+        }
+
         Command::Show(Show::Tasklist { id }) => {
             let tasklist = reqwest::Client::new()
                 .get(format!("http://localhost:8080/tasklist/{id}"))

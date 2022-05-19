@@ -1,6 +1,19 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
-use actix_web::{patch, web, HttpResponse, Responder};
+use actix_web::{get, patch, web, HttpResponse, Responder};
 use tasklists::command::MarkTask;
+
+#[get("/{task_id}")]
+async fn get(task_id: web::Path<String>) -> actix_web::Result<impl Responder> {
+    let task_id: usize = task_id.into_inner().parse().map_err(ErrorBadRequest)?;
+
+    let database = tasklists::open().map_err(ErrorInternalServerError)?;
+    let task = database
+        .tasks
+        .get(task_id)
+        .ok_or(ErrorNotFound(format!("Task {task_id} not found")))?;
+
+    Ok(HttpResponse::Ok().json(&task))
+}
 
 #[patch("/{task_id}")]
 async fn put(

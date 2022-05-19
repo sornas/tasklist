@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
                     .service(routine::init)
                     .service(routine::new),
             )
-            .service(web::scope("/task").service(task::put))
+            .service(web::scope("/task").service(task::get).service(task::put))
             .service(
                 web::scope("/tasklist")
                     .service(tasklist::get)
