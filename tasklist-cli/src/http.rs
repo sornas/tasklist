@@ -2,7 +2,7 @@ use color_eyre::eyre::{anyhow, Result};
 use tasklists::command;
 use tasklists::model::{Repetition, Routine, State, Task, Tasklist};
 
-use crate::{parse_repetition, Args, Command, Create, Init, Mark, Show};
+use crate::{parse_repetition, Args, Command, Create, Init, Mark, Remove, Show};
 
 pub async fn handle_args(args: &Args) -> Result<()> {
     match &args.command {
@@ -108,6 +108,15 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 unreachable!();
             }
 
+            Ok(())
+        }
+
+        Command::Remove(Remove::Task { id, from }) => {
+            reqwest::Client::new()
+                .delete(format!("http://localhost:8080/tasklist/{from}/task"))
+                .json(&id)
+                .send()
+                .await?;
             Ok(())
         }
 

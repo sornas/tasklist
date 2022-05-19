@@ -21,6 +21,8 @@ pub enum Command {
     Init(Init),
     Mark(Mark),
     #[clap(subcommand)]
+    Remove(Remove),
+    #[clap(subcommand)]
     Show(Show),
 }
 
@@ -51,6 +53,15 @@ pub struct Mark {
     #[clap(long)]
     tasklist: Option<u64>,
     state: State,
+}
+
+#[derive(clap::Subcommand, Debug)]
+pub enum Remove {
+    Task {
+        id: u64,
+        #[clap(long)]
+        from: u64, // tasklist
+    },
 }
 
 #[derive(clap::Subcommand, Debug)]

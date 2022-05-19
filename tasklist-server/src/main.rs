@@ -26,6 +26,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/task").service(task::get).service(task::put))
             .service(
                 web::scope("/tasklist")
+                    .service(tasklist::delete_task)
                     .service(tasklist::get)
                     .service(tasklist::list)
                     .service(tasklist::new)
