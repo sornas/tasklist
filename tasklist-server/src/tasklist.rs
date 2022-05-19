@@ -1,5 +1,5 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
-use actix_web::{get, post, put, web, HttpResponse, Responder};
+use actix_web::{get, patch, post, web, HttpResponse, Responder};
 use tasklists::command::MarkTasklist;
 use tasklists::model::Tasklist;
 
@@ -31,7 +31,7 @@ async fn new(tasklist: web::Json<Tasklist>) -> actix_web::Result<impl Responder>
     Ok(HttpResponse::Ok().body(tasklist_id.to_string()))
 }
 
-#[put("/{tasklist_id}")]
+#[patch("/{tasklist_id}")]
 async fn put(
     tasklist_id: web::Path<String>,
     mut command: web::Json<MarkTasklist>,

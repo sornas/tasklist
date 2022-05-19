@@ -1,8 +1,8 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
-use actix_web::{put, web, HttpResponse, Responder};
+use actix_web::{patch, web, HttpResponse, Responder};
 use tasklists::command::MarkTask;
 
-#[put("/{task_id}")]
+#[patch("/{task_id}")]
 async fn put(
     task_id: web::Path<String>,
     mut command: web::Json<MarkTask>,

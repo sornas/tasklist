@@ -89,7 +89,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 };
 
                 reqwest::Client::new()
-                    .put(format!("http://localhost:8080/task/{task_id}"))
+                    .patch(format!("http://localhost:8080/task/{task_id}"))
                     .json(&command)
                     .send()
                     .await?;
@@ -100,7 +100,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 };
 
                 reqwest::Client::new()
-                    .put(format!("http://localhost:8080/tasklist/{tasklist_id}"))
+                    .patch(format!("http://localhost:8080/tasklist/{tasklist_id}"))
                     .json(&command)
                     .send()
                     .await?;
