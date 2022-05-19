@@ -153,7 +153,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
-        Command::Show(Show::Tasklist { id }) => {
+        Command::Show(Show::Tasklist { id: Some(id) }) => {
             let tasklist = reqwest::Client::new()
                 .get(format!("http://localhost:8080/tasklist/{id}"))
                 .send()
@@ -161,6 +161,17 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .json::<Tasklist>()
                 .await?;
             println!("{:#?}", tasklist);
+            Ok(())
+        }
+
+        Command::Show(Show::Tasklist { id: None }) => {
+            let tasklists = reqwest::Client::new()
+                .get(format!("http://localhost:8080/tasklist"))
+                .send()
+                .await?
+                .json::<Vec<Tasklist>>()
+                .await?;
+            println!("{:#?}", tasklists);
             Ok(())
         }
     }
