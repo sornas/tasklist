@@ -4,16 +4,15 @@
 - [x] add tasks to routine model
 - [x] initialize routine (/start a tasklist)
 - [x] show tasks in tasklist
-- [ ] start a task
-- [ ] pause a task
-- [ ] resume a task
-- [ ] abort a task
-- [ ] complete a task
-- [ ] pause a tasklist
-- [ ] resume a tasklist
-- [ ] abort a tasklist +
-      what happens with the tasks on the tasklist?
-- [ ] complete a tasklist
+- [x] start a task
+- [x] pause a task
+- [x] resume a task
+- [x] abort a task
+- [x] complete a task
+- [x] pause a tasklist
+- [x] resume a tasklist
+- [x] abort a tasklist
+- [x] complete a tasklist
 - [ ] remove tasks from tasklists (both model and created)
 - [ ] list all routines
 - [ ] list all tasks in tasklist and their state
