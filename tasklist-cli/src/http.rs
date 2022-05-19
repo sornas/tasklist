@@ -120,6 +120,28 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
+        Command::Show(Show::Routine { id: Some(id) }) => {
+            let routine = reqwest::Client::new()
+                .get(format!("http://localhost:8080/routine/{id}"))
+                .send()
+                .await?
+                .json::<Routine>()
+                .await?;
+            println!("{:#?}", routine);
+            Ok(())
+        }
+
+        Command::Show(Show::Routine { id: None }) => {
+            let routines = reqwest::Client::new()
+                .get(format!("http://localhost:8080/routine"))
+                .send()
+                .await?
+                .json::<Vec<Routine>>()
+                .await?;
+            println!("{:#?}", routines);
+            Ok(())
+        }
+
         Command::Show(Show::Task { id }) => {
             let task = reqwest::Client::new()
                 .get(format!("http://localhost:8080/task/{id}"))

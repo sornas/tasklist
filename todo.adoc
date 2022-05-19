@@ -14,7 +14,7 @@
 - [x] abort a tasklist
 - [x] complete a tasklist
 - [x] remove tasks from tasklists (both model and created)
-- [ ] list all routines
+- [x] list all routines
 - [ ] list all tasks in tasklist and their state
 - [ ] filter tasks in tasklist by state
 

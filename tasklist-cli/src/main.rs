@@ -68,6 +68,7 @@ pub enum Remove {
 pub enum Show {
     Task { id: u64 },
     Tasklist { id: u64 },
+    Routine { id: Option<u64> },
 }
 
 #[tokio::main]

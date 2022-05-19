@@ -16,11 +16,13 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(TracingLogger::default())
+            .wrap(actix_web::middleware::NormalizePath::trim())
             .service(
                 web::scope("/routine")
                     .service(routine::add_task)
                     .service(routine::get)
                     .service(routine::init)
+                    .service(routine::list)
                     .service(routine::new),
             )
             .service(web::scope("/task").service(task::get).service(task::put))

@@ -2,6 +2,12 @@ use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound}
 use actix_web::{get, post, web, HttpResponse, Responder};
 use tasklists::model::{Routine, State, Task};
 
+#[get("")]
+async fn list() -> actix_web::Result<impl Responder> {
+    let database = tasklists::open().map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok().json(&database.routines))
+}
+
 #[get("/{routine_id}")]
 async fn get(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;

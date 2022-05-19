@@ -16,7 +16,7 @@ async fn get(tasklist_id: web::Path<String>) -> actix_web::Result<impl Responder
     Ok(HttpResponse::Ok().json(&tasklist))
 }
 
-#[get("/")]
+#[get("")]
 async fn list() -> actix_web::Result<impl Responder> {
     let database = tasklists::open().map_err(ErrorInternalServerError)?;
     Ok(HttpResponse::Ok().json(&database.tasklists))
