@@ -1,5 +1,6 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, post, put, web, HttpResponse, Responder};
+use tasklists::command::MarkTasklist;
 use tasklists::model::Tasklist;
 
 #[get("/{tasklist_id}")]
@@ -28,4 +29,25 @@ async fn new(tasklist: web::Json<Tasklist>) -> actix_web::Result<impl Responder>
     database.tasklists.push(tasklist.into_inner());
     tasklists::store(&database).map_err(ErrorInternalServerError)?;
     Ok(HttpResponse::Ok().body(tasklist_id.to_string()))
+}
+
+#[put("/{tasklist_id}")]
+async fn put(
+    tasklist_id: web::Path<String>,
+    mut command: web::Json<MarkTasklist>,
+) -> actix_web::Result<impl Responder> {
+    let tasklist_id: usize = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
+
+    let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
+    let mut tasklist = database
+        .tasklists
+        .get_mut(tasklist_id)
+        .ok_or(ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
+
+    if let Some(state) = command.state.take() {
+        tasklist.state = state;
+    }
+
+    tasklists::store(&database).map_err(ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok())
 }

@@ -1,10 +1,8 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::{put, web, HttpResponse, Responder};
 use tasklists::command::MarkTask;
-// use tracing::{event, Level};
 
 #[put("/{task_id}")]
-#[tracing::instrument]
 async fn put(
     task_id: web::Path<String>,
     mut command: web::Json<MarkTask>,

@@ -93,8 +93,17 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                     .json(&command)
                     .send()
                     .await?;
-            } else if let Some(_tasklist_id) = tasklist {
-                todo!();
+            } else if let Some(tasklist_id) = tasklist {
+                let command = command::MarkTasklist {
+                    state: Some(state.clone()),
+                    ..Default::default()
+                };
+
+                reqwest::Client::new()
+                    .put(format!("http://localhost:8080/tasklist/{tasklist_id}"))
+                    .json(&command)
+                    .send()
+                    .await?;
             } else {
                 unreachable!();
             }
