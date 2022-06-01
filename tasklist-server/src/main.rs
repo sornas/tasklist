@@ -1,10 +1,66 @@
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
+
 use actix_web::{web, App, HttpServer};
+use diesel::prelude::*;
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
+mod model;
 mod routine;
+mod schema;
 mod task;
 mod tasklist;
+
+diesel_migrations::embed_migrations!("migrations");
+
+fn show_tasks() {
+    use schema::tasks::dsl::*;
+
+    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let results = tasks
+        .limit(5)
+        .load::<model::Task>(&connection)
+        .expect("Error loading tasks");
+
+    println!("Displaying {} tasks", results.len());
+    for task in results {
+        println!("[{}] {}", if task.done { "X" } else { " " }, task.name);
+    }
+}
+
+fn insert_new_task(name: &str) {
+    use schema::tasks;
+
+    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let new_task = model::NewTask { name };
+
+    diesel::insert_into(tasks::table)
+        .values(&new_task)
+        .execute(&connection)
+        .expect("Error insert new task");
+}
+
+fn mark_task_done(search_name: &str) {
+    use schema::tasks::dsl::*;
+
+    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let task = tasks
+        .filter(name.eq(search_name))
+        .limit(1)
+        .load::<model::Task>(&connection)
+        .expect("Error loading tasks")
+        .first()
+        .expect("Couldn't find task")
+        .id;
+
+    diesel::update(tasks.find(task))
+        .set(done.eq(true))
+        .execute(&connection)
+        .expect("Couldn't find task");
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -12,6 +68,16 @@ async fn main() -> std::io::Result<()> {
         .with_max_level(Level::DEBUG)
         .compact()
         .init();
+
+    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
+
+    insert_new_task("aaaaa");
+    insert_new_task("bbbbb");
+    insert_new_task("ccccc");
+    show_tasks();
+    mark_task_done("aaaaa");
+    show_tasks();
 
     HttpServer::new(|| {
         App::new()
