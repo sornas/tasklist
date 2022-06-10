@@ -16,10 +16,14 @@ mod tasklist;
 
 diesel_migrations::embed_migrations!("migrations");
 
+fn db_connection() -> Result<SqliteConnection, ConnectionError> {
+    SqliteConnection::establish("tasklist.sqlite")
+}
+
 fn show_tasks() {
     use schema::tasks::dsl::*;
 
-    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let connection = db_connection().unwrap();
     let results = tasks
         .limit(5)
         .load::<model::Task>(&connection)
@@ -34,7 +38,7 @@ fn show_tasks() {
 fn insert_new_task(name: &str) {
     use schema::tasks;
 
-    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let connection = db_connection().unwrap();
     let new_task = model::NewTask { name };
 
     diesel::insert_into(tasks::table)
@@ -46,7 +50,7 @@ fn insert_new_task(name: &str) {
 fn mark_task_done(search_name: &str) {
     use schema::tasks::dsl::*;
 
-    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let connection = db_connection().unwrap();
     let task = tasks
         .filter(name.eq(search_name))
         .limit(1)
@@ -69,7 +73,7 @@ async fn main() -> std::io::Result<()> {
         .compact()
         .init();
 
-    let connection = SqliteConnection::establish("tasklist.sqlite").unwrap();
+    let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
     insert_new_task("aaaaa");

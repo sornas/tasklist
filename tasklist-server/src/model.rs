@@ -1,4 +1,5 @@
 use diesel::Queryable;
+use serde::Serialize;
 
 use crate::schema::tasks;
 
@@ -29,7 +30,7 @@ pub struct Tasklist {
     pub belongs_to: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize)]
 pub struct Task {
     pub id: i32,
     pub name: String,
