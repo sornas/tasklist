@@ -33,12 +33,11 @@ async fn put(
 
     let connection = db_connection().map_err(ErrorInternalServerError)?;
 
-    if let Some(_state) = command.state.take() {
-        todo!()
-        // diesel::update(dsl::tasks.find(task_id))
-        //     .set(dsl::state.eq(state))
-        //     .execute(&connection)
-        //     .map_err(|_| ErrorNotFound(format!("Task {task_id} not found")))?;
+    if let Some(state) = command.state.take() {
+        diesel::update(dsl::tasks.find(task_id))
+            .set(dsl::state.eq(state.to_string()))
+            .execute(&connection)
+            .map_err(|_| ErrorNotFound(format!("Task {task_id} not found")))?;
     }
     if let Some(name) = command.name.take() {
         diesel::update(dsl::tasks.find(task_id))

@@ -13,13 +13,13 @@ CREATE TABLE models (
 CREATE TABLE tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR NOT NULL,
-    done BOOLEAN NOT NULL DEFAULT FALSE
+    state VARCHAR NOT NULL  -- NOTE: could be INTEGER for less storage
 );
 
 CREATE TABLE tasklists (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR NOT NULL,
-    done BOOLEAN NOT NULL DEFAULT FALSE,
+    state VARCHAR NOT NULL,  -- NOTE: could be INTEGER for less storage
     belongs_to INTEGER NOT NULL
 );
 

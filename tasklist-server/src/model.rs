@@ -26,7 +26,7 @@ pub struct TasklistPartof {
 pub struct Tasklist {
     pub id: i32,
     pub name: String,
-    pub done: bool,
+    pub state: String,
     pub belongs_to: i32,
 }
 
@@ -34,11 +34,12 @@ pub struct Tasklist {
 pub struct Task {
     pub id: i32,
     pub name: String,
-    pub done: bool,
+    pub state: String,
 }
 
 #[derive(Insertable)]
 #[table_name = "tasks"]
 pub struct NewTask<'a> {
     pub name: &'a str,
+    pub state: &'a str,
 }

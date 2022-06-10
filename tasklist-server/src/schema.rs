@@ -24,7 +24,7 @@ table! {
     tasklists (id) {
         id -> Integer,
         name -> Text,
-        done -> Bool,
+        state -> Text,
         belongs_to -> Integer,
     }
 }
@@ -33,7 +33,7 @@ table! {
     tasks (id) {
         id -> Integer,
         name -> Text,
-        done -> Bool,
+        state -> Text,
     }
 }
 

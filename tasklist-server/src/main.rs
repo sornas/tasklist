@@ -31,7 +31,7 @@ fn show_tasks() {
 
     println!("Displaying {} tasks", results.len());
     for task in results {
-        println!("[{}] {}", if task.done { "X" } else { " " }, task.name);
+        println!("{} ({})", task.name, task.state.to_string());
     }
 }
 
@@ -39,7 +39,10 @@ fn insert_new_task(name: &str) {
     use schema::tasks;
 
     let connection = db_connection().unwrap();
-    let new_task = model::NewTask { name };
+    let new_task = model::NewTask {
+        name,
+        state: "not-started",
+    };
 
     diesel::insert_into(tasks::table)
         .values(&new_task)
@@ -51,7 +54,7 @@ fn mark_task_done(search_name: &str) {
     use schema::tasks::dsl::*;
 
     let connection = db_connection().unwrap();
-    let task = tasks
+    let _task = tasks
         .filter(name.eq(search_name))
         .limit(1)
         .load::<model::Task>(&connection)
@@ -60,10 +63,10 @@ fn mark_task_done(search_name: &str) {
         .expect("Couldn't find task")
         .id;
 
-    diesel::update(tasks.find(task))
-        .set(done.eq(true))
-        .execute(&connection)
-        .expect("Couldn't find task");
+    // diesel::update(tasks.find(task))
+    //     .set(done.eq(true))
+    //     .execute(&connection)
+    //     .expect("Couldn't find task");
 }
 
 #[actix_web::main]
