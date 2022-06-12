@@ -31,6 +31,8 @@ pub struct Metadata {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Tasklist {
+    pub name: String,
+    #[serde(with = "crate::serde::string")]
     pub state: State,
     pub tasks: Vec<Id>,
 }

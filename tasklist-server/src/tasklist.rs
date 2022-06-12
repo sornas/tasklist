@@ -1,25 +1,59 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
+use diesel::prelude::*;
 use tasklists::command::MarkTasklist;
 use tasklists::model::Tasklist;
 
-#[get("/{tasklist_id}")]
-async fn get(tasklist_id: web::Path<String>) -> actix_web::Result<impl Responder> {
-    let tasklist_id: usize = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
+use crate::model;
+use crate::schema::tasklists::dsl;
+use crate::DbPool;
 
-    let database = tasklists::open().map_err(ErrorInternalServerError)?;
-    let tasklist = database
-        .tasklists
-        .get(tasklist_id)
-        .ok_or(ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
+#[get("/{tasklist_id}")]
+async fn get(
+    pool: web::Data<DbPool>,
+    tasklist_id: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    let tasklist_id: i32 = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
+
+    let connection = pool.get().map_err(ErrorInternalServerError)?;
+
+    let tasklists = dsl::tasklists
+        .find(tasklist_id)
+        .load::<model::Tasklist>(&connection)
+        .map_err(ErrorInternalServerError)?;
+    let tasklist = tasklists
+        .get(0)
+        .ok_or_else(|| ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
 
     Ok(HttpResponse::Ok().json(&tasklist))
 }
 
 #[get("")]
-async fn list() -> actix_web::Result<impl Responder> {
-    let database = tasklists::open().map_err(ErrorInternalServerError)?;
-    Ok(HttpResponse::Ok().json(&database.tasklists))
+async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
+    let connection = pool.get().map_err(ErrorInternalServerError)?;
+
+    let tasklists = dsl::tasklists
+        .load::<model::Tasklist>(&connection)
+        .map_err(ErrorInternalServerError)?;
+    let tasklists: Vec<_> = tasklists
+        .iter()
+        .map(
+            |model::Tasklist {
+                 id,
+                 name,
+                 state,
+                 belongs_to,
+             }| {
+                // Get all tasks that are part of this tasklist
+                tasklists::model::Tasklist {
+                    name: name.clone(),
+                    state: todo!(),
+                    tasks: todo!(),
+                }
+            },
+        )
+        .collect();
+    Ok(HttpResponse::Ok().json(&tasklists))
 }
 
 #[post("/new")]
