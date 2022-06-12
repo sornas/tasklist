@@ -13,5 +13,5 @@ tasklists = { path = "../libtasklist" }
 serde = "1.0.137"
 serde_json = "1.0.81"
 
-diesel = { version = "1.4.4", features = ["sqlite"] }
+diesel = { version = "1.4.4", features = ["sqlite", "r2d2"] }
 diesel_migrations = "1.4.0"

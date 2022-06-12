@@ -5,6 +5,8 @@ extern crate diesel_migrations;
 
 use actix_web::{web, App, HttpServer};
 use diesel::prelude::*;
+use diesel::r2d2;
+use r2d2::ConnectionManager;
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
@@ -69,6 +71,8 @@ fn mark_task_done(search_name: &str) {
     //     .expect("Couldn't find task");
 }
 
+type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
@@ -86,10 +90,14 @@ async fn main() -> std::io::Result<()> {
     mark_task_done("aaaaa");
     show_tasks();
 
-    HttpServer::new(|| {
+    let manager = ConnectionManager::<SqliteConnection>::new("tasklist.sqlite");
+    let pool: DbPool = r2d2::Pool::builder().build(manager).unwrap();
+
+    HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())
             .wrap(actix_web::middleware::NormalizePath::trim())
+            .app_data(web::Data::new(pool.clone()))
             .service(
                 web::scope("/routine")
                     .service(routine::add_task)

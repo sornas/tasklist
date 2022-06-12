@@ -41,6 +41,7 @@ pub struct Task {
     // end: Option<>,
     // length: Option<>,
     // assigned: Option<User>,
+    #[serde(with = "crate::serde::string")]
     pub state: State,
     pub name: String,
 }

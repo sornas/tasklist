@@ -4,6 +4,7 @@ use crate::model::Database;
 
 pub mod command;
 pub mod model;
+pub mod serde;
 
 pub fn open() -> Result<Database> {
     let db_file = std::path::PathBuf::from("database.json");
