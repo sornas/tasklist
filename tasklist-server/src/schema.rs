@@ -26,6 +26,7 @@ table! {
         name -> Text,
         state -> Text,
         belongs_to -> Integer,
+        archived -> Bool,
     }
 }
 

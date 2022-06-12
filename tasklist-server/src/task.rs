@@ -24,7 +24,7 @@ async fn get(
         .get(0)
         .ok_or_else(|| ErrorNotFound(format!("Task {task_id} not found")))?;
 
-    Ok(HttpResponse::Ok().json(&task))
+    Ok(HttpResponse::Ok().json(task.clone().to_model().map_err(ErrorInternalServerError)?))
 }
 
 #[patch("/{task_id}")]

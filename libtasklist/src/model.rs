@@ -3,30 +3,16 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-pub type Id = u64;
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Database {
-    pub routines: Vec<Routine>,
-    pub tasklists: Vec<Tasklist>,
-    pub tasks: Vec<Task>,
-}
+pub type Id = i32;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Routine {
     pub name: String,
     pub repetition: Repetition,
     pub model: Id,
-    pub task_lists: Vec<Id>,
+    pub tasklists: Vec<Id>,
     // owner: User,
     // members: Vec<User>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Metadata {
-    pub next_routine: Id,
-    pub next_task: Id,
-    pub next_tasklist: Id,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -43,9 +29,9 @@ pub struct Task {
     // end: Option<>,
     // length: Option<>,
     // assigned: Option<User>,
+    pub name: String,
     #[serde(with = "crate::serde::string")]
     pub state: State,
-    pub name: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

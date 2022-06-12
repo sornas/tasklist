@@ -11,7 +11,7 @@ use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
 mod model;
-mod routine;
+// mod routine;
 mod schema;
 mod task;
 mod tasklist;
@@ -41,7 +41,7 @@ fn insert_new_task(name: &str) {
     use schema::tasks;
 
     let connection = db_connection().unwrap();
-    let new_task = model::NewTask {
+    let new_task = model::insert::Task {
         name,
         state: "not-started",
     };
@@ -98,22 +98,21 @@ async fn main() -> std::io::Result<()> {
             .wrap(TracingLogger::default())
             .wrap(actix_web::middleware::NormalizePath::trim())
             .app_data(web::Data::new(pool.clone()))
-            .service(
-                web::scope("/routine")
-                    .service(routine::add_task)
-                    .service(routine::get)
-                    .service(routine::init)
-                    .service(routine::list)
-                    .service(routine::new),
-            )
+            // .service(
+            //     web::scope("/routine")
+            //         .service(routine::add_task)
+            //         .service(routine::get)
+            //         .service(routine::init)
+            //         .service(routine::list)
+            //         .service(routine::new),
+            // )
             .service(web::scope("/task").service(task::get).service(task::put))
             .service(
                 web::scope("/tasklist")
-                    .service(tasklist::delete_task)
+                    // .service(tasklist::delete_task)
                     .service(tasklist::get)
-                    .service(tasklist::list)
-                    .service(tasklist::new)
-                    .service(tasklist::put),
+                    .service(tasklist::list), // .service(tasklist::new)
+                                              // .service(tasklist::put),
             )
     })
     .bind(("127.0.0.1", 8080))?
