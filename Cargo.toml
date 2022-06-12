@@ -3,6 +3,6 @@
 members = [
     "libtasklist",
 
-    "tasklist-cli",
+    # "tasklist-cli",
     "tasklist-server",
 ]
