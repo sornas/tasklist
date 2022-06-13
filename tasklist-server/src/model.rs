@@ -37,6 +37,7 @@ pub struct RegularTasklist {
 impl RegularTasklist {
     pub fn to_model(self, tasks: Vec<i32>) -> Result<model::Tasklist> {
         Ok(model::Tasklist {
+            id: self.id,
             name: self.name,
             // NOTE this type hint is required. weird
             state: self.state.parse().map_err(|e: String| anyhow!(e))?,

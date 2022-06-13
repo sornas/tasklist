@@ -17,6 +17,7 @@ pub struct Routine {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Tasklist {
+    pub id: i32,
     pub name: String,
     #[serde(with = "crate::serde::string")]
     pub state: State,
