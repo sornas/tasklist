@@ -145,20 +145,20 @@ async fn main() -> std::io::Result<()> {
             .wrap(actix_web::middleware::NormalizePath::trim())
             .app_data(web::Data::new(pool.clone()))
             .service(
-                web::scope("/routine")
+                web::scope("/routines")
                     //         .service(routine::add_task)
                     //         .service(routine::get)
                     //         .service(routine::init)
                     .service(routine::list), //         .service(routine::new),
             )
             .service(
-                web::scope("/task")
+                web::scope("/tasks")
                     .service(task::get)
                     .service(task::list)
                     .service(task::put),
             )
             .service(
-                web::scope("/tasklist")
+                web::scope("/tasklists")
                     // .service(tasklist::delete_task)
                     .service(tasklist::get)
                     .service(tasklist::list), // .service(tasklist::new)
