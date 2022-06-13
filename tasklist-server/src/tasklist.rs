@@ -1,6 +1,9 @@
+use std::str::FromStr;
+
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::{get, web, HttpResponse, Responder};
 use diesel::prelude::*;
+use tasklists::model;
 
 use crate::model as db_model;
 use crate::schema;
@@ -54,18 +57,26 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
                  id,
                  name,
                  state,
-                 belongs_to,
-                 archived,
+                 belongs_to: _,
+                 archived: _,
              }| {
                 // Get all tasks that are part of this tasklist
-                tasklists::model::Tasklist {
+                let tasks = {
+                    use schema::tasklist_partof::dsl;
+                    dsl::tasklist_partof
+                        .filter(dsl::tasklist.eq(id))
+                        .select(dsl::task)
+                        .load::<i32>(&connection)
+                        .map_err(ErrorInternalServerError)?
+                };
+                Ok(tasklists::model::Tasklist {
                     name: name.clone(),
-                    state: todo!(),
-                    tasks: todo!(),
-                }
+                    state: model::State::from_str(state).map_err(ErrorInternalServerError)?,
+                    tasks,
+                })
             },
         )
-        .collect();
+        .collect::<actix_web::Result<Vec<_>>>()?;
     Ok(HttpResponse::Ok().json(&tasklists))
 }
 
