@@ -33,17 +33,38 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(&routines))
 }
 
-// #[get("/{routine_id}")]
-// async fn get(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
-//     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
-//     let database = tasklists::open().map_err(ErrorInternalServerError)?;
-//     let routine = database
-//         .routines
-//         .get(routine_id)
-//         .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
-//     Ok(HttpResponse::Ok().json(&routine))
-// }
-//
+#[get("/{routine_id}")]
+async fn get(
+    pool: web::Data<DbPool>,
+    routine_id: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
+    let connection = pool.get().map_err(ErrorInternalServerError)?;
+
+    let routines = schema::routines::dsl::routines
+        .load::<db_model::Routine>(&connection)
+        .map_err(ErrorInternalServerError)?;
+    let routine = routines
+        .get(0)
+        .ok_or_else(|| ErrorNotFound(format!("Routine {routine_id} not found")))?;
+
+    let tasklists = {
+        use schema::tasklists::dsl;
+        dsl::tasklists
+            .filter(dsl::routine_id.eq(routine.id))
+            .select(dsl::id)
+            .load::<i32>(&connection)
+            .map_err(ErrorInternalServerError)?
+    };
+
+    Ok(HttpResponse::Ok().json(
+        &routine
+            .clone()
+            .to_model(tasklists)
+            .map_err(ErrorInternalServerError)?,
+    ))
+}
+
 // #[post("/new")]
 // async fn new(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
 //     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
@@ -52,7 +73,7 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
 //     tasklists::store(&database).map_err(ErrorInternalServerError)?;
 //     Ok(HttpResponse::Ok().body(routine_id.to_string()))
 // }
-//
+
 // #[post("/{routine_id}/task")]
 // async fn add_task(
 //     routine_id: web::Path<String>,
@@ -78,7 +99,7 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
 //     tasklists::store(&database).map_err(ErrorInternalServerError)?;
 //     Ok(HttpResponse::Ok().body(task_id.to_string()))
 // }
-//
+
 // #[post("/{routine_id}/init")]
 // async fn init(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
 //     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
