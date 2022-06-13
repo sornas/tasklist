@@ -2,13 +2,24 @@ use ::tasklists::model;
 use color_eyre::eyre::{anyhow, Result};
 use diesel::Queryable;
 
-#[derive(Queryable)]
+#[derive(Clone, Queryable)]
 pub struct Routine {
     pub id: i32,
     pub name: String,
     pub model: i32,
     // owner
     // repetition
+}
+
+impl Routine {
+    pub fn to_model(self, tasklists: Vec<i32>) -> Result<model::Routine> {
+        Ok(model::Routine {
+            model: self.model,
+            name: self.name,
+            repetition: model::Repetition::Manual,
+            tasklists,
+        })
+    }
 }
 
 #[derive(Queryable)]
@@ -30,7 +41,7 @@ pub struct RegularTasklist {
     pub id: i32,
     pub name: String,
     pub state: String,
-    pub belongs_to: i32,
+    pub routine_id: i32,
     pub archived: bool,
 }
 
@@ -119,7 +130,7 @@ pub mod insert {
     pub struct Tasklist<'a> {
         pub name: &'a str,
         pub state: &'a str,
-        pub belongs_to: i32,
+        pub routine_id: i32,
     }
 
     #[derive(Insertable)]
@@ -127,5 +138,12 @@ pub mod insert {
     pub struct TasklistPartof {
         pub tasklist: i32,
         pub task: i32,
+    }
+
+    #[derive(Insertable)]
+    #[table_name = "routines"]
+    pub struct Routine<'a> {
+        pub name: &'a str,
+        pub model: i32,
     }
 }

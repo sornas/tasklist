@@ -20,7 +20,7 @@ CREATE TABLE tasklists (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR NOT NULL,
     state VARCHAR NOT NULL,  -- NOTE: could be INTEGER for less storage
-    belongs_to INTEGER NOT NULL,
+    routine_id INTEGER NOT NULL,
     archived BOOLEAN NOT NULL DEFAULT 'f'
 );
 

@@ -46,8 +46,7 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
 
     let tasklists = schema::tasklists::dsl::tasklists
         .load::<db_model::RegularTasklist>(&connection)
-        .map_err(ErrorInternalServerError)?;
-    let tasklists: Vec<_> = tasklists
+        .map_err(ErrorInternalServerError)?
         .iter()
         .map(|tasklist| {
             let tasks = {

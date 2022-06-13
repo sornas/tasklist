@@ -11,7 +11,7 @@ use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
 mod model;
-// mod routine;
+mod routine;
 mod schema;
 mod task;
 mod tasklist;
@@ -59,7 +59,7 @@ fn insert_new_tasklist(name: &str) {
     let new_tasklist = model::insert::Tasklist {
         name,
         state: "not-started",
-        belongs_to: 0,
+        routine_id: 0,
     };
 
     diesel::insert_into(tasklists::table)
@@ -82,6 +82,18 @@ fn insert_new_tasklist(name: &str) {
         .values(&tasklist_tasks)
         .execute(&connection)
         .expect("Error inserting tasklist partof");
+}
+
+fn insert_new_routine(name: &str) {
+    use schema::routines;
+
+    let connection = db_connection().unwrap();
+    let new_routine = model::insert::Routine { name, model: 1 };
+
+    diesel::insert_into(routines::table)
+        .values(&new_routine)
+        .execute(&connection)
+        .expect("Error inserting new routine");
 }
 
 fn mark_task_done(search_name: &str) {
@@ -115,13 +127,14 @@ async fn main() -> std::io::Result<()> {
     let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
-    insert_new_tasklist("list1");
-    insert_new_task("aaaaa");
-    insert_new_task("bbbbb");
-    insert_new_task("ccccc");
-    show_tasks();
-    mark_task_done("aaaaa");
-    show_tasks();
+    // insert_new_tasklist("list1");
+    // insert_new_task("aaaaa");
+    // insert_new_task("bbbbb");
+    // insert_new_task("ccccc");
+    // show_tasks();
+    // mark_task_done("aaaaa");
+    // show_tasks();
+    insert_new_routine("routine123");
 
     let manager = ConnectionManager::<SqliteConnection>::new("tasklist.sqlite");
     let pool: DbPool = r2d2::Pool::builder().build(manager).unwrap();
@@ -131,14 +144,13 @@ async fn main() -> std::io::Result<()> {
             .wrap(TracingLogger::default())
             .wrap(actix_web::middleware::NormalizePath::trim())
             .app_data(web::Data::new(pool.clone()))
-            // .service(
-            //     web::scope("/routine")
-            //         .service(routine::add_task)
-            //         .service(routine::get)
-            //         .service(routine::init)
-            //         .service(routine::list)
-            //         .service(routine::new),
-            // )
+            .service(
+                web::scope("/routine")
+                    //         .service(routine::add_task)
+                    //         .service(routine::get)
+                    //         .service(routine::init)
+                    .service(routine::list), //         .service(routine::new),
+            )
             .service(web::scope("/task").service(task::get).service(task::put))
             .service(
                 web::scope("/tasklist")

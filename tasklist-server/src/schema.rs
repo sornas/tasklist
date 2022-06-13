@@ -25,7 +25,7 @@ table! {
         id -> Integer,
         name -> Text,
         state -> Text,
-        belongs_to -> Integer,
+        routine_id -> Integer,
         archived -> Bool,
     }
 }
