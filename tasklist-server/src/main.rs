@@ -127,12 +127,6 @@ async fn main() -> std::io::Result<()> {
     let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
-    // insert_new_tasklist("list1");
-    // insert_new_task("aaaaa");
-    // insert_new_task("bbbbb");
-    // // insert_new_task("ccccc");
-    // // show_tasks();
-    // mark_task_done("aaaaa");
     // show_tasks();
     insert_new_routine("routine123");
 
@@ -149,7 +143,8 @@ async fn main() -> std::io::Result<()> {
                     //         .service(routine::add_task)
                     //         .service(routine::get)
                     //         .service(routine::init)
-                    .service(routine::list), //         .service(routine::new),
+                    //         .service(routine::new),
+                    .service(routine::list),
             )
             .service(
                 web::scope("/tasks")
@@ -160,9 +155,10 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/tasklists")
                     // .service(tasklist::delete_task)
+                    // .service(tasklist::new)
+                    // .service(tasklist::put),
                     .service(tasklist::get)
-                    .service(tasklist::list), // .service(tasklist::new)
-                                              // .service(tasklist::put),
+                    .service(tasklist::list),
             )
     })
     .bind(("127.0.0.1", 8080))?
