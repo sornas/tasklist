@@ -127,9 +127,6 @@ async fn main() -> std::io::Result<()> {
     let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
-    // show_tasks();
-    insert_new_routine("routine123");
-
     let manager = ConnectionManager::<SqliteConnection>::new("tasklist.sqlite");
     let pool: DbPool = r2d2::Pool::builder().build(manager).unwrap();
 
