@@ -2,8 +2,6 @@ use ::tasklists::model;
 use color_eyre::eyre::{anyhow, Result};
 use diesel::Queryable;
 
-use super::schema::{tasklists, tasks};
-
 #[derive(Queryable)]
 pub struct Routine {
     pub id: i32,
@@ -27,8 +25,7 @@ pub struct User {
     // email
 }
 
-#[derive(Clone, Queryable, Identifiable, Associations)]
-#[table_name = "tasklists"] // TODO we should have different tables for regular and model?
+#[derive(Clone, Queryable)]
 pub struct RegularTasklist {
     pub id: i32,
     pub name: String,
@@ -48,7 +45,7 @@ impl RegularTasklist {
     }
 }
 
-#[derive(Clone, Queryable, Identifiable, Associations)]
+#[derive(Clone, Queryable)]
 pub struct Task {
     pub id: i32,
     pub name: String,
@@ -65,8 +62,6 @@ impl Task {
 }
 
 #[derive(Queryable)]
-#[diesel(belongs_to(RegularTasklist, foreign_key = "regular"))]
-#[diesel(belongs_to(Task, foreign_key = "task"))]
 pub struct RegularPartOf {
     pub _id: i32,
     pub regular: i32,
@@ -116,5 +111,20 @@ pub mod insert {
     pub struct Task<'a> {
         pub name: &'a str,
         pub state: &'a str,
+    }
+
+    #[derive(Insertable)]
+    #[table_name = "tasklists"]
+    pub struct Tasklist<'a> {
+        pub name: &'a str,
+        pub state: &'a str,
+        pub belongs_to: i32,
+    }
+
+    #[derive(Insertable)]
+    #[table_name = "tasklist_partof"]
+    pub struct TasklistPartof {
+        pub tasklist: i32,
+        pub task: i32,
     }
 }

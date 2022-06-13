@@ -23,7 +23,14 @@ async fn get(
         .get(0)
         .ok_or_else(|| ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
 
-    let tasks = todo!();
+    let tasks = {
+        use schema::tasklist_partof::dsl;
+        dsl::tasklist_partof
+            .filter(dsl::tasklist.eq(tasklist.id))
+            .select(dsl::task)
+            .load::<i32>(&connection)
+            .map_err(ErrorInternalServerError)?
+    };
 
     Ok(HttpResponse::Ok().json(
         &tasklist

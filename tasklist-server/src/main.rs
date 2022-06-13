@@ -52,6 +52,38 @@ fn insert_new_task(name: &str) {
         .expect("Error insert new task");
 }
 
+fn insert_new_tasklist(name: &str) {
+    use schema::{tasklist_partof, tasklists};
+
+    let connection = db_connection().unwrap();
+    let new_tasklist = model::insert::Tasklist {
+        name,
+        state: "not-started",
+        belongs_to: 0,
+    };
+
+    diesel::insert_into(tasklists::table)
+        .values(&new_tasklist)
+        .execute(&connection)
+        .expect("Error inserting new tasklist");
+
+    let tasklist_tasks = vec![
+        model::insert::TasklistPartof {
+            tasklist: 1,
+            task: 1,
+        },
+        model::insert::TasklistPartof {
+            tasklist: 1,
+            task: 2,
+        },
+    ];
+
+    diesel::insert_into(tasklist_partof::table)
+        .values(&tasklist_tasks)
+        .execute(&connection)
+        .expect("Error inserting tasklist partof");
+}
+
 fn mark_task_done(search_name: &str) {
     use schema::tasks::dsl::*;
 
@@ -83,6 +115,7 @@ async fn main() -> std::io::Result<()> {
     let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
+    insert_new_tasklist("list1");
     insert_new_task("aaaaa");
     insert_new_task("bbbbb");
     insert_new_task("ccccc");
