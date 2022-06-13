@@ -128,11 +128,11 @@ async fn main() -> std::io::Result<()> {
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
     // insert_new_tasklist("list1");
-    // insert_new_task("aaaaa");
-    // insert_new_task("bbbbb");
+    insert_new_task("aaaaa");
+    insert_new_task("bbbbb");
     // insert_new_task("ccccc");
     // show_tasks();
-    // mark_task_done("aaaaa");
+    mark_task_done("aaaaa");
     // show_tasks();
     insert_new_routine("routine123");
 
@@ -151,7 +151,12 @@ async fn main() -> std::io::Result<()> {
                     //         .service(routine::init)
                     .service(routine::list), //         .service(routine::new),
             )
-            .service(web::scope("/task").service(task::get).service(task::put))
+            .service(
+                web::scope("/task")
+                    .service(task::get)
+                    .service(task::list)
+                    .service(task::put),
+            )
             .service(
                 web::scope("/tasklist")
                     // .service(tasklist::delete_task)

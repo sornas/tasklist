@@ -27,6 +27,19 @@ async fn get(
     Ok(HttpResponse::Ok().json(task.clone().to_model().map_err(ErrorInternalServerError)?))
 }
 
+#[get("")]
+async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
+    let connection = pool.get().map_err(ErrorInternalServerError)?;
+
+    let tasks = dsl::tasks
+        .load::<model::Task>(&connection)
+        .map_err(ErrorInternalServerError)?
+        .iter()
+        .map(|task| task.clone().to_model().map_err(ErrorInternalServerError))
+        .collect::<actix_web::Result<Vec<_>>>()?;
+    Ok(HttpResponse::Ok().json(&tasks))
+}
+
 #[patch("/{task_id}")]
 async fn put(
     pool: web::Data<DbPool>,
