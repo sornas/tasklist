@@ -2,8 +2,8 @@ use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound}
 use actix_web::{get, web, HttpResponse, Responder};
 use diesel::prelude::*;
 
-use crate::model as db_model;
-use crate::schema;
+use crate::db;
+use crate::db::schema;
 use crate::DbPool;
 
 #[get("/{tasklist_id}")]
@@ -17,7 +17,7 @@ async fn get(
 
     let tasklists = schema::tasklists::dsl::tasklists
         .find(tasklist_id)
-        .load::<db_model::RegularTasklist>(&connection)
+        .load::<db::model::RegularTasklist>(&connection)
         .map_err(ErrorInternalServerError)?;
     let tasklist = tasklists
         .get(0)
@@ -45,7 +45,7 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
     let tasklists = schema::tasklists::dsl::tasklists
-        .load::<db_model::RegularTasklist>(&connection)
+        .load::<db::model::RegularTasklist>(&connection)
         .map_err(ErrorInternalServerError)?
         .iter()
         .map(|tasklist| {

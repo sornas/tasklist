@@ -3,8 +3,8 @@ use actix_web::{get, patch, web, HttpResponse, Responder};
 use diesel::prelude::*;
 use tasklists::command::MarkTask;
 
-use crate::model;
-use crate::schema::tasks::dsl;
+use crate::db;
+use crate::db::schema::tasks::dsl;
 use crate::DbPool;
 
 #[get("/{task_id}")]
@@ -18,7 +18,7 @@ async fn get(
 
     let tasks = dsl::tasks
         .find(task_id)
-        .load::<model::Task>(&connection)
+        .load::<db::model::Task>(&connection)
         .map_err(ErrorInternalServerError)?;
     let task = tasks
         .get(0)
@@ -32,7 +32,7 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
     let tasks = dsl::tasks
-        .load::<model::Task>(&connection)
+        .load::<db::model::Task>(&connection)
         .map_err(ErrorInternalServerError)?
         .iter()
         .map(|task| task.clone().to_model().map_err(ErrorInternalServerError))

@@ -1,6 +1,6 @@
-use ::tasklists::model;
 use color_eyre::eyre::{anyhow, Result};
 use diesel::Queryable;
+use tasklists::model;
 
 #[derive(Clone, Queryable)]
 pub struct Routine {
@@ -117,7 +117,7 @@ pub struct ModelPartof {
 }
 
 pub mod insert {
-    pub use crate::schema::*;
+    pub use crate::db::schema::*;
 
     #[derive(Insertable)]
     #[table_name = "tasks"]

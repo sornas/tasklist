@@ -3,15 +3,15 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use diesel::prelude::*;
 use tasklists::model;
 
-use crate::model as db_model;
-use crate::schema;
+use crate::db;
+use crate::db::schema;
 use crate::DbPool;
 
 #[get("")]
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.get().map_err(ErrorInternalServerError)?;
     let routines = schema::routines::dsl::routines
-        .load::<db_model::Routine>(&connection)
+        .load::<db::model::Routine>(&connection)
         .map_err(ErrorInternalServerError)?
         .iter()
         .map(|routine| {
@@ -43,7 +43,7 @@ async fn get(
 
     let routine = schema::routines::dsl::routines
         .find(routine_id)
-        .first::<db_model::Routine>(&connection)
+        .first::<db::model::Routine>(&connection)
         .map_err(|e| ErrorNotFound(format!("Routine {routine_id} not found: {e:?}")))?;
 
     let tasklists = {
@@ -76,7 +76,7 @@ async fn new(
 ) -> actix_web::Result<impl Responder> {
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
-    let new_model = db_model::insert::ModelTasklist { routine: 0 };
+    let new_model = db::model::insert::ModelTasklist { routine: 0 };
 
     diesel::insert_into(schema::models::table)
         .values(&new_model)
@@ -87,7 +87,7 @@ async fn new(
         .get_result::<i32>(&connection)
         .map_err(ErrorInternalServerError)?;
 
-    let new_routine = db_model::insert::Routine {
+    let new_routine = db::model::insert::Routine {
         name: &routine.name,
         model: model_id,
     };

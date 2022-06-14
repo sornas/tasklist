@@ -10,9 +10,8 @@ use r2d2::ConnectionManager;
 use tracing::Level;
 use tracing_actix_web::TracingLogger;
 
-mod model;
+mod db;
 mod routine;
-mod schema;
 mod task;
 mod tasklist;
 
@@ -23,12 +22,12 @@ fn db_connection() -> Result<SqliteConnection, ConnectionError> {
 }
 
 fn show_tasks() {
-    use schema::tasks::dsl::*;
+    use db::schema::tasks::dsl::*;
 
     let connection = db_connection().unwrap();
     let results = tasks
         .limit(5)
-        .load::<model::Task>(&connection)
+        .load::<db::model::Task>(&connection)
         .expect("Error loading tasks");
 
     println!("Displaying {} tasks", results.len());
@@ -38,10 +37,10 @@ fn show_tasks() {
 }
 
 fn insert_new_task(name: &str) {
-    use schema::tasks;
+    use db::schema::tasks;
 
     let connection = db_connection().unwrap();
-    let new_task = model::insert::Task {
+    let new_task = db::model::insert::Task {
         name,
         state: "not-started",
     };
@@ -53,10 +52,10 @@ fn insert_new_task(name: &str) {
 }
 
 fn insert_new_tasklist(name: &str) {
-    use schema::{tasklist_partof, tasklists};
+    use db::schema::{tasklist_partof, tasklists};
 
     let connection = db_connection().unwrap();
-    let new_tasklist = model::insert::Tasklist {
+    let new_tasklist = db::model::insert::Tasklist {
         name,
         state: "not-started",
         routine_id: 0,
@@ -68,11 +67,11 @@ fn insert_new_tasklist(name: &str) {
         .expect("Error inserting new tasklist");
 
     let tasklist_tasks = vec![
-        model::insert::TasklistPartof {
+        db::model::insert::TasklistPartof {
             tasklist: 1,
             task: 1,
         },
-        model::insert::TasklistPartof {
+        db::model::insert::TasklistPartof {
             tasklist: 1,
             task: 2,
         },
@@ -85,10 +84,10 @@ fn insert_new_tasklist(name: &str) {
 }
 
 fn insert_new_routine(name: &str) {
-    use schema::routines;
+    use db::schema::routines;
 
     let connection = db_connection().unwrap();
-    let new_routine = model::insert::Routine { name, model: 1 };
+    let new_routine = db::model::insert::Routine { name, model: 1 };
 
     diesel::insert_into(routines::table)
         .values(&new_routine)
@@ -97,13 +96,13 @@ fn insert_new_routine(name: &str) {
 }
 
 fn mark_task_done(search_name: &str) {
-    use schema::tasks::dsl::*;
+    use db::schema::tasks::dsl::*;
 
     let connection = db_connection().unwrap();
     let _task = tasks
         .filter(name.eq(search_name))
         .limit(1)
-        .load::<model::Task>(&connection)
+        .load::<db::model::Task>(&connection)
         .expect("Error loading tasks")
         .first()
         .expect("Couldn't find task")
