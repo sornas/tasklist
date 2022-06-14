@@ -95,8 +95,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/routines")
                     // .service(routine::add_task)
-                    // .service(routine::get)
                     // .service(routine::init)
+                    .service(routine::get)
                     .service(routine::list)
                     .service(routine::new),
             )
@@ -109,7 +109,6 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/tasklists")
                     // .service(tasklist::delete_task)
-                    // .service(tasklist::new)
                     // .service(tasklist::put),
                     .service(tasklist::get)
                     .service(tasklist::list),
