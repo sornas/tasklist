@@ -14,6 +14,7 @@ pub struct Routine {
 impl Routine {
     pub fn to_model(self, tasklists: Vec<i32>) -> Result<model::Routine> {
         Ok(model::Routine {
+            id: self.id,
             model: self.model,
             name: self.name,
             repetition: model::Repetition::Manual,
@@ -145,5 +146,11 @@ pub mod insert {
     pub struct Routine<'a> {
         pub name: &'a str,
         pub model: i32,
+    }
+
+    #[derive(Insertable)]
+    #[table_name = "models"]
+    pub struct ModelTasklist {
+        pub routine: i32,
     }
 }

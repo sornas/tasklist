@@ -137,11 +137,11 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .service(
                 web::scope("/routines")
-                    //         .service(routine::add_task)
-                    //         .service(routine::get)
-                    //         .service(routine::init)
-                    //         .service(routine::new),
-                    .service(routine::list),
+                    // .service(routine::add_task)
+                    // .service(routine::get)
+                    // .service(routine::init)
+                    .service(routine::list)
+                    .service(routine::new),
             )
             .service(
                 web::scope("/tasks")

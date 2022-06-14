@@ -65,14 +65,54 @@ async fn get(
     ))
 }
 
-// #[post("/new")]
-// async fn new(routine: web::Json<Routine>) -> actix_web::Result<impl Responder> {
-//     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
-//     let routine_id = database.routines.len();
-//     database.routines.push(routine.0);
-//     tasklists::store(&database).map_err(ErrorInternalServerError)?;
-//     Ok(HttpResponse::Ok().body(routine_id.to_string()))
-// }
+no_arg_sql_function!(
+    last_insert_rowid,
+    diesel::sql_types::Integer,
+    "Represents the SQL last_insert_row() function"
+);
+
+#[post("/new")]
+async fn new(
+    pool: web::Data<DbPool>,
+    routine: web::Json<model::NewRoutine>,
+) -> actix_web::Result<impl Responder> {
+    let connection = pool.get().map_err(ErrorInternalServerError)?;
+
+    let new_model = db_model::insert::ModelTasklist { routine: 0 };
+
+    diesel::insert_into(schema::models::table)
+        .values(&new_model)
+        .execute(&connection)
+        .map_err(ErrorInternalServerError)?;
+
+    let model_id = diesel::select(last_insert_rowid)
+        .get_result::<i32>(&connection)
+        .map_err(ErrorInternalServerError)?;
+
+    let new_routine = db_model::insert::Routine {
+        name: &routine.name,
+        model: model_id,
+    };
+
+    let routine_id = diesel::select(last_insert_rowid)
+        .get_result::<i32>(&connection)
+        .map_err(ErrorInternalServerError)?;
+
+    {
+        use schema::models::dsl;
+        diesel::update(dsl::models.find(model_id))
+            .set(dsl::routine.eq(routine_id))
+            .execute(&connection)
+            .map_err(ErrorInternalServerError)?;
+    }
+
+    diesel::insert_into(schema::routines::table)
+        .values(&new_routine)
+        .execute(&connection)
+        .map_err(ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok())
+}
 
 // #[post("/{routine_id}/task")]
 // async fn add_task(

@@ -1,6 +1,7 @@
 table! {
     models (id) {
         id -> Integer,
+        routine -> Integer,
     }
 }
 

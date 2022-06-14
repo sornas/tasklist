@@ -7,6 +7,7 @@ pub type Id = i32;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Routine {
+    pub id: Id,
     pub name: String,
     pub repetition: Repetition,
     pub model: Id,
@@ -16,8 +17,13 @@ pub struct Routine {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct NewRoutine {
+    pub name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Tasklist {
-    pub id: i32,
+    pub id: Id,
     pub name: String,
     #[serde(with = "crate::serde::string")]
     pub state: State,
