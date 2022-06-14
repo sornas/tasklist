@@ -1,12 +1,12 @@
 table! {
-    models (id) {
+    model (id) {
         id -> Integer,
         routine -> Integer,
     }
 }
 
 table! {
-    routines (id) {
+    routine (id) {
         id -> Integer,
         name -> Text,
         model -> Integer,
@@ -14,15 +14,31 @@ table! {
 }
 
 table! {
-    tasklist_partof (id) {
+    task (id) {
         id -> Integer,
-        tasklist -> Integer,
+        name -> Text,
+        state -> Text,
+    }
+}
+
+table! {
+    task_partof_model (id) {
+        id -> Integer,
+        model -> Integer,
         task -> Integer,
     }
 }
 
 table! {
-    tasklists (id) {
+    task_partof_regular (id) {
+        id -> Integer,
+        regular -> Integer,
+        task -> Integer,
+    }
+}
+
+table! {
+    tasklist (id) {
         id -> Integer,
         name -> Text,
         state -> Text,
@@ -31,12 +47,11 @@ table! {
     }
 }
 
-table! {
-    tasks (id) {
-        id -> Integer,
-        name -> Text,
-        state -> Text,
-    }
-}
-
-allow_tables_to_appear_in_same_query!(models, routines, tasklist_partof, tasklists, tasks,);
+allow_tables_to_appear_in_same_query!(
+    model,
+    routine,
+    task,
+    task_partof_model,
+    task_partof_regular,
+    tasklist,
+);

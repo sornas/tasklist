@@ -15,18 +15,17 @@ async fn get(
 
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
-    let tasklists = schema::tasklists::dsl::tasklists
+    let tasklist = schema::tasklist::dsl::tasklist
         .find(tasklist_id)
-        .load::<db::model::RegularTasklist>(&connection)
-        .map_err(ErrorInternalServerError)?;
-    let tasklist = tasklists
-        .get(0)
+        .first::<db::model::RegularTasklist>(&connection)
+        .optional()
+        .map_err(ErrorInternalServerError)?
         .ok_or_else(|| ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
 
     let tasks = {
-        use schema::tasklist_partof::dsl;
-        dsl::tasklist_partof
-            .filter(dsl::tasklist.eq(tasklist.id))
+        use schema::task_partof_regular::dsl;
+        dsl::task_partof_regular
+            .filter(dsl::regular.eq(tasklist.id))
             .select(dsl::task)
             .load::<i32>(&connection)
             .map_err(ErrorInternalServerError)?
@@ -44,15 +43,15 @@ async fn get(
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
-    let tasklists = schema::tasklists::dsl::tasklists
+    let tasklists = schema::tasklist::dsl::tasklist
         .load::<db::model::RegularTasklist>(&connection)
         .map_err(ErrorInternalServerError)?
         .iter()
         .map(|tasklist| {
             let tasks = {
-                use schema::tasklist_partof::dsl;
-                dsl::tasklist_partof
-                    .filter(dsl::tasklist.eq(tasklist.id))
+                use schema::task_partof_regular::dsl;
+                dsl::task_partof_regular
+                    .filter(dsl::regular.eq(tasklist.id))
                     .select(dsl::task)
                     .load::<i32>(&connection)
                     .map_err(ErrorInternalServerError)?

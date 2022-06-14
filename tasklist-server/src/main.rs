@@ -23,57 +23,6 @@ fn db_connection() -> Result<SqliteConnection, ConnectionError> {
     SqliteConnection::establish("tasklist.sqlite")
 }
 
-fn insert_new_tasklist(name: &str) {
-    use db::schema::{tasklist_partof, tasklists};
-
-    let connection = db_connection().unwrap();
-    let new_tasklist = db::model::insert::Tasklist {
-        name,
-        state: "not-started",
-        routine_id: 0,
-    };
-
-    diesel::insert_into(tasklists::table)
-        .values(&new_tasklist)
-        .execute(&connection)
-        .expect("Error inserting new tasklist");
-
-    let tasklist_tasks = vec![
-        db::model::insert::TasklistPartof {
-            tasklist: 1,
-            task: 1,
-        },
-        db::model::insert::TasklistPartof {
-            tasklist: 1,
-            task: 2,
-        },
-    ];
-
-    diesel::insert_into(tasklist_partof::table)
-        .values(&tasklist_tasks)
-        .execute(&connection)
-        .expect("Error inserting tasklist partof");
-}
-
-fn mark_task_done(search_name: &str) {
-    use db::schema::tasks::dsl::*;
-
-    let connection = db_connection().unwrap();
-    let _task = tasks
-        .filter(name.eq(search_name))
-        .limit(1)
-        .load::<db::model::Task>(&connection)
-        .expect("Error loading tasks")
-        .first()
-        .expect("Couldn't find task")
-        .id;
-
-    // diesel::update(tasks.find(task))
-    //     .set(done.eq(true))
-    //     .execute(&connection)
-    //     .expect("Couldn't find task");
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
@@ -94,11 +43,12 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .service(
                 web::scope("/routines")
-                    // .service(routine::add_task)
                     // .service(routine::init)
+                    .service(routine::add_task)
                     .service(routine::get)
                     .service(routine::list)
-                    .service(routine::new),
+                    .service(routine::new)
+                    .service(routine::tasks),
             )
             .service(
                 web::scope("/tasks")

@@ -1,23 +1,23 @@
 -- Your SQL goes here
 
-CREATE TABLE routines (
+CREATE TABLE routine (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR NOT NULL,
     model INTEGER NOT NULL
 );
 
-CREATE TABLE models (
+CREATE TABLE model (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     routine INTEGER NOT NULL
 );
 
-CREATE TABLE tasks (
+CREATE TABLE task (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR NOT NULL,
     state VARCHAR NOT NULL  -- NOTE: could be INTEGER for less storage
 );
 
-CREATE TABLE tasklists (
+CREATE TABLE tasklist (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR NOT NULL,
     state VARCHAR NOT NULL,  -- NOTE: could be INTEGER for less storage
@@ -25,9 +25,15 @@ CREATE TABLE tasklists (
     archived BOOLEAN NOT NULL DEFAULT 'f'
 );
 
-CREATE TABLE tasklist_partof (
+CREATE TABLE task_partof_regular (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    tasklist INTEGER NOT NULL,
+    regular INTEGER NOT NULL,
+    task INTEGER NOT NULL
+);
+
+CREATE TABLE task_partof_model (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    model INTEGER NOT NULL,
     task INTEGER NOT NULL
 );
 

@@ -25,9 +25,9 @@ impl Routine {
     }
 
     pub fn tasklists(&self, connection: &SqliteConnection) -> QueryResult<Vec<i32>> {
-        use db::schema::tasklists::dsl;
+        use db::schema::tasklist::dsl;
 
-        dsl::tasklists
+        dsl::tasklist
             .filter(dsl::routine_id.eq(self.id))
             .select(dsl::id)
             .load(connection)
@@ -128,10 +128,12 @@ pub struct ModelPartof {
 }
 
 pub mod insert {
+    use ::tasklists::model;
     use diesel::prelude::*;
 
     use crate::db;
 
+    use db::schema::model as model_;
     use db::schema::*;
 
     macro_rules! impl_insert {
@@ -151,18 +153,27 @@ pub mod insert {
     }
 
     #[derive(Insertable)]
-    #[table_name = "tasks"]
-    pub struct Task<'a> {
-        pub name: &'a str,
-        pub state: &'a str,
+    #[table_name = "task"]
+    pub struct Task {
+        pub name: String,
+        pub state: String,
     }
 
-    impl<'a> Task<'a> {
-        impl_insert!(tasks::table);
+    impl Task {
+        impl_insert!(task::table);
+    }
+
+    impl From<model::Task> for Task {
+        fn from(other: model::Task) -> Self {
+            Self {
+                name: other.name,
+                state: other.state.to_string(),
+            }
+        }
     }
 
     #[derive(Insertable)]
-    #[table_name = "tasklists"]
+    #[table_name = "tasklist"]
     pub struct Tasklist<'a> {
         pub name: &'a str,
         pub state: &'a str,
@@ -170,38 +181,49 @@ pub mod insert {
     }
 
     impl<'a> Tasklist<'a> {
-        impl_insert!(tasklists::table);
+        impl_insert!(tasklist::table);
     }
 
     #[derive(Insertable)]
-    #[table_name = "tasklist_partof"]
-    pub struct TasklistPartof {
-        pub tasklist: i32,
+    #[table_name = "task_partof_regular"]
+    pub struct TaskPartofRegular {
+        pub regular: i32,
         pub task: i32,
     }
 
-    impl TasklistPartof {
-        impl_insert!(tasklist_partof::table);
+    impl TaskPartofRegular {
+        impl_insert!(task_partof_regular::table);
     }
 
     #[derive(Insertable)]
-    #[table_name = "routines"]
+    #[table_name = "task_partof_model"]
+    pub struct TaskPartofModel {
+        pub model: i32,
+        pub task: i32,
+    }
+
+    impl TaskPartofModel {
+        impl_insert!(task_partof_model::table);
+    }
+
+    #[derive(Insertable)]
+    #[table_name = "routine"]
     pub struct Routine<'a> {
         pub name: &'a str,
         pub model: i32,
     }
 
     impl<'a> Routine<'a> {
-        impl_insert!(routines::table);
+        impl_insert!(routine::table);
     }
 
     #[derive(Insertable)]
-    #[table_name = "models"]
+    #[table_name = "model_"]
     pub struct ModelTasklist {
         pub routine: i32,
     }
 
     impl ModelTasklist {
-        impl_insert!(models::table);
+        impl_insert!(model_::table);
     }
 }
