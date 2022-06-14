@@ -128,13 +128,37 @@ pub struct ModelPartof {
 }
 
 pub mod insert {
-    pub use crate::db::schema::*;
+    use diesel::prelude::*;
+
+    use crate::db;
+
+    use db::schema::*;
+
+    macro_rules! impl_insert {
+        ($table:expr) => {
+            pub fn insert(&self, connection: &SqliteConnection) -> QueryResult<()> {
+                diesel::insert_into($table)
+                    .values(self)
+                    .execute(connection)?;
+                Ok(())
+            }
+
+            pub fn insert_and_id(&self, connection: &SqliteConnection) -> QueryResult<i32> {
+                self.insert(connection)?;
+                db::last_insert_rowid(connection)
+            }
+        };
+    }
 
     #[derive(Insertable)]
     #[table_name = "tasks"]
     pub struct Task<'a> {
         pub name: &'a str,
         pub state: &'a str,
+    }
+
+    impl<'a> Task<'a> {
+        impl_insert!(tasks::table);
     }
 
     #[derive(Insertable)]
@@ -145,11 +169,19 @@ pub mod insert {
         pub routine_id: i32,
     }
 
+    impl<'a> Tasklist<'a> {
+        impl_insert!(tasklists::table);
+    }
+
     #[derive(Insertable)]
     #[table_name = "tasklist_partof"]
     pub struct TasklistPartof {
         pub tasklist: i32,
         pub task: i32,
+    }
+
+    impl TasklistPartof {
+        impl_insert!(tasklist_partof::table);
     }
 
     #[derive(Insertable)]
@@ -159,9 +191,17 @@ pub mod insert {
         pub model: i32,
     }
 
+    impl<'a> Routine<'a> {
+        impl_insert!(routines::table);
+    }
+
     #[derive(Insertable)]
     #[table_name = "models"]
     pub struct ModelTasklist {
         pub routine: i32,
+    }
+
+    impl ModelTasklist {
+        impl_insert!(models::table);
     }
 }

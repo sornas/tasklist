@@ -53,12 +53,6 @@ async fn get(
     ))
 }
 
-no_arg_sql_function!(
-    last_insert_rowid,
-    diesel::sql_types::Integer,
-    "Represents the SQL last_insert_row() function"
-);
-
 #[post("/new")]
 async fn new(
     pool: web::Data<DbPool>,
@@ -66,29 +60,17 @@ async fn new(
 ) -> actix_web::Result<impl Responder> {
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
-    let new_model = db::model::insert::ModelTasklist { routine: 0 };
-
-    diesel::insert_into(schema::models::table)
-        .values(&new_model)
-        .execute(&connection)
+    let model = db::model::insert::ModelTasklist { routine: 0 };
+    let model_id = model
+        .insert_and_id(&connection)
         .map_err(ErrorInternalServerError)?;
 
-    let model_id = diesel::select(last_insert_rowid)
-        .get_result::<i32>(&connection)
-        .map_err(ErrorInternalServerError)?;
-
-    let new_routine = db::model::insert::Routine {
+    let routine = db::model::insert::Routine {
         name: &routine.name,
         model: model_id,
     };
-
-    diesel::insert_into(schema::routines::table)
-        .values(&new_routine)
-        .execute(&connection)
-        .map_err(ErrorInternalServerError)?;
-
-    let routine_id = diesel::select(last_insert_rowid)
-        .get_result::<i32>(&connection)
+    let routine_id = routine
+        .insert_and_id(&connection)
         .map_err(ErrorInternalServerError)?;
 
     {
