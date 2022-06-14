@@ -23,36 +23,6 @@ fn db_connection() -> Result<SqliteConnection, ConnectionError> {
     SqliteConnection::establish("tasklist.sqlite")
 }
 
-fn show_tasks() {
-    use db::schema::tasks::dsl::*;
-
-    let connection = db_connection().unwrap();
-    let results = tasks
-        .limit(5)
-        .load::<db::model::Task>(&connection)
-        .expect("Error loading tasks");
-
-    println!("Displaying {} tasks", results.len());
-    for task in results {
-        println!("{} ({})", task.name, task.state.to_string());
-    }
-}
-
-fn insert_new_task(name: &str) {
-    use db::schema::tasks;
-
-    let connection = db_connection().unwrap();
-    let new_task = db::model::insert::Task {
-        name,
-        state: "not-started",
-    };
-
-    diesel::insert_into(tasks::table)
-        .values(&new_task)
-        .execute(&connection)
-        .expect("Error insert new task");
-}
-
 fn insert_new_tasklist(name: &str) {
     use db::schema::{tasklist_partof, tasklists};
 
@@ -83,18 +53,6 @@ fn insert_new_tasklist(name: &str) {
         .values(&tasklist_tasks)
         .execute(&connection)
         .expect("Error inserting tasklist partof");
-}
-
-fn insert_new_routine(name: &str) {
-    use db::schema::routines;
-
-    let connection = db_connection().unwrap();
-    let new_routine = db::model::insert::Routine { name, model: 1 };
-
-    diesel::insert_into(routines::table)
-        .values(&new_routine)
-        .execute(&connection)
-        .expect("Error inserting new routine");
 }
 
 fn mark_task_done(search_name: &str) {
