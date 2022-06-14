@@ -38,15 +38,13 @@ async fn get(
     pool: web::Data<DbPool>,
     routine_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
-    let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
+    let routine_id: i32 = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
     let connection = pool.get().map_err(ErrorInternalServerError)?;
 
-    let routines = schema::routines::dsl::routines
-        .load::<db_model::Routine>(&connection)
-        .map_err(ErrorInternalServerError)?;
-    let routine = routines
-        .get(0)
-        .ok_or_else(|| ErrorNotFound(format!("Routine {routine_id} not found")))?;
+    let routine = schema::routines::dsl::routines
+        .find(routine_id)
+        .first::<db_model::Routine>(&connection)
+        .map_err(|e| ErrorNotFound(format!("Routine {routine_id} not found: {e:?}")))?;
 
     let tasklists = {
         use schema::tasklists::dsl;
