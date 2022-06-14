@@ -1,6 +1,8 @@
 use color_eyre::eyre::{anyhow, Result};
-use diesel::Queryable;
+use diesel::prelude::*;
 use tasklists::model;
+
+use crate::db;
 
 #[derive(Clone, Queryable)]
 pub struct Routine {
@@ -20,6 +22,15 @@ impl Routine {
             repetition: model::Repetition::Manual,
             tasklists,
         })
+    }
+
+    pub fn tasklists(&self, connection: &SqliteConnection) -> QueryResult<Vec<i32>> {
+        use db::schema::tasklists::dsl;
+
+        dsl::tasklists
+            .filter(dsl::routine_id.eq(self.id))
+            .select(dsl::id)
+            .load(connection)
     }
 }
 

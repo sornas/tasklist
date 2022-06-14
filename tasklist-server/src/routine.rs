@@ -15,14 +15,9 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
         .map_err(ErrorInternalServerError)?
         .iter()
         .map(|routine| {
-            let tasklists = {
-                use schema::tasklists::dsl;
-                dsl::tasklists
-                    .filter(dsl::routine_id.eq(routine.id))
-                    .select(dsl::id)
-                    .load::<i32>(&connection)
-                    .map_err(ErrorInternalServerError)?
-            };
+            let tasklists = routine
+                .tasklists(&connection)
+                .map_err(ErrorInternalServerError)?;
             routine
                 .clone()
                 .to_model(tasklists)
@@ -46,14 +41,9 @@ async fn get(
         .first::<db::model::Routine>(&connection)
         .map_err(|e| ErrorNotFound(format!("Routine {routine_id} not found: {e:?}")))?;
 
-    let tasklists = {
-        use schema::tasklists::dsl;
-        dsl::tasklists
-            .filter(dsl::routine_id.eq(routine.id))
-            .select(dsl::id)
-            .load::<i32>(&connection)
-            .map_err(ErrorInternalServerError)?
-    };
+    let tasklists = routine
+        .tasklists(&connection)
+        .map_err(ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(
         &routine
@@ -92,6 +82,11 @@ async fn new(
         model: model_id,
     };
 
+    diesel::insert_into(schema::routines::table)
+        .values(&new_routine)
+        .execute(&connection)
+        .map_err(ErrorInternalServerError)?;
+
     let routine_id = diesel::select(last_insert_rowid)
         .get_result::<i32>(&connection)
         .map_err(ErrorInternalServerError)?;
@@ -103,11 +98,6 @@ async fn new(
             .execute(&connection)
             .map_err(ErrorInternalServerError)?;
     }
-
-    diesel::insert_into(schema::routines::table)
-        .values(&new_routine)
-        .execute(&connection)
-        .map_err(ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok())
 }

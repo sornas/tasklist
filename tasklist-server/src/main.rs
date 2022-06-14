@@ -15,6 +15,8 @@ mod routine;
 mod task;
 mod tasklist;
 
+type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+
 diesel_migrations::embed_migrations!("migrations");
 
 fn db_connection() -> Result<SqliteConnection, ConnectionError> {
@@ -113,8 +115,6 @@ fn mark_task_done(search_name: &str) {
     //     .execute(&connection)
     //     .expect("Couldn't find task");
 }
-
-type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
