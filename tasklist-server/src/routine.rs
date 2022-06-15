@@ -124,7 +124,7 @@ async fn add_task(
 }
 
 #[get("/{routine_id}/tasks")]
-async fn tasks(
+async fn routine_tasks(
     pool: web::Data<DbPool>,
     routine_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
@@ -155,30 +155,98 @@ async fn tasks(
     Ok(HttpResponse::Ok().json(&tasks))
 }
 
-// #[post("/{routine_id}/init")]
-// async fn init(routine_id: web::Path<String>) -> actix_web::Result<impl Responder> {
-//     let routine_id: usize = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
-//
-//     let mut database = tasklists::open().map_err(ErrorInternalServerError)?;
-//     let routine = database
-//         .routines
-//         .get_mut(routine_id)
-//         .ok_or(ErrorNotFound(format!("Routine {routine_id} not found")))?;
-//
-//     let mut model = database
-//         .tasklists
-//         .get(routine.model as usize)
-//         .ok_or(ErrorNotFound(format!(
-//             "Routine {routine_id} refers to non-existant model tasklist {}",
-//             routine.model
-//         )))?
-//         .clone();
-//     model.state = State::Started;
-//
-//     let tasklist_id = database.tasklists.len();
-//     database.tasklists.push(model);
-//     routine.task_lists.push(tasklist_id as u64);
-//
-//     tasklists::store(&database).map_err(ErrorInternalServerError)?;
-//     Ok(HttpResponse::Ok().body(tasklist_id.to_string()))
-// }
+#[post("/{routine_id}/init")]
+async fn init(
+    pool: web::Data<DbPool>,
+    routine_id: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    let routine_id: i32 = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
+
+    let connection = pool.get().map_err(ErrorInternalServerError)?;
+
+    let (name, model_id): (String, i32) = {
+        use schema::routine::dsl;
+        dsl::routine
+            .find(routine_id)
+            .select((dsl::name, dsl::model))
+            .first(&connection)
+            .optional()
+            .map_err(ErrorInternalServerError)?
+            .ok_or_else(|| ErrorNotFound(format!("Routine {routine_id} not found")))?
+    };
+
+    // Insert our new tasklist
+    let tasklist = db::model::insert::RegularTasklist {
+        name: &name,
+        state: &model::State::NotStarted.to_string(),
+        routine_id,
+    };
+    let tasklist_id = tasklist
+        .insert_and_id(&connection)
+        .map_err(ErrorInternalServerError)?;
+
+    // Get model's tasks
+    let tasks: Vec<i32> = {
+        use schema::task_partof_model::dsl;
+        dsl::task_partof_model
+            .filter(dsl::model.eq(model_id))
+            .select(dsl::task)
+            .load(&connection)
+            .map_err(ErrorInternalServerError)?
+    };
+
+    // Insert copies of tasks
+    // FIXME this is one fetch for each name
+    let new_tasks: Vec<i32> = tasks
+        .iter()
+        .map(|id| -> actix_web::Result<String> {
+            use schema::task::dsl;
+            let name = dsl::task
+                .find(id)
+                .select(dsl::name)
+                .first(&connection)
+                .optional();
+            match name {
+                Err(e) => Err(ErrorInternalServerError(e)),
+                Ok(None) => Err(ErrorInternalServerError(format!(
+                    "Model {model_id} in routine {routine_id} refers to invalid task {id}"
+                ))),
+                Ok(Some(name)) => Ok(name),
+            }
+        })
+        .map(|name| -> actix_web::Result<_> {
+            // Insert new task
+            let task = db::model::insert::Task {
+                name: name?,
+                state: model::State::NotStarted.to_string(),
+            };
+            let new_id = task
+                .insert_and_id(&connection)
+                .map_err(ErrorInternalServerError)?;
+            Ok(new_id)
+        })
+        .collect::<actix_web::Result<_>>()?;
+
+    let new_task_partof = new_tasks
+        .iter()
+        .map(|task| db::model::insert::TaskPartofRegular {
+            regular: tasklist_id,
+            task: *task,
+        })
+        .collect::<Vec<_>>();
+
+    // FIXME Sqlite doesn't support inserting multiple values when using a pooled connection?
+    //       so this is one insert per task.
+    // diesel::insert_into(db::schema::task_partof_regular::table)
+    //     .values(&new_task_partof)
+    //     .execute(&connection)
+    //     .map_err(ErrorInternalServerError)?;
+
+    for to_insert in new_task_partof {
+        to_insert
+            .insert(&connection)
+            .map_err(ErrorInternalServerError)?;
+    }
+
+    Ok(HttpResponse::Ok())
+}

@@ -174,13 +174,13 @@ pub mod insert {
 
     #[derive(Insertable)]
     #[table_name = "tasklist"]
-    pub struct Tasklist<'a> {
+    pub struct RegularTasklist<'a> {
         pub name: &'a str,
         pub state: &'a str,
         pub routine_id: i32,
     }
 
-    impl<'a> Tasklist<'a> {
+    impl<'a> RegularTasklist<'a> {
         impl_insert!(tasklist::table);
     }
 
