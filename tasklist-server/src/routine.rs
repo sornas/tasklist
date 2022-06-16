@@ -1,15 +1,18 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::{get, post, web, HttpResponse, Responder};
 use diesel::prelude::*;
+use tap::prelude::*;
 use tasklists::model;
+use tracing::{event, Level};
 
 use crate::db;
 use crate::db::schema;
 use crate::DbPool;
 
 #[get("")]
+#[tracing::instrument]
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
     let routines = schema::routine::dsl::routine
         .load::<db::model::Routine>(&connection)
         .map_err(ErrorInternalServerError)?
@@ -29,12 +32,13 @@ async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
 }
 
 #[get("/{routine_id}")]
+#[tracing::instrument]
 async fn get(
     pool: web::Data<DbPool>,
     routine_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let routine_id: i32 = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let routine = schema::routine::dsl::routine
         .find(routine_id)
@@ -56,11 +60,12 @@ async fn get(
 }
 
 #[post("/new")]
+#[tracing::instrument]
 async fn new(
     pool: web::Data<DbPool>,
     routine: web::Json<model::NewRoutine>,
 ) -> actix_web::Result<impl Responder> {
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let model = db::model::insert::ModelTasklist { routine: 0 };
     let model_id = model
@@ -87,6 +92,7 @@ async fn new(
 }
 
 #[post("/{routine_id}/task")]
+#[tracing::instrument]
 async fn add_task(
     pool: web::Data<DbPool>,
     routine_id: web::Path<String>,
@@ -94,7 +100,7 @@ async fn add_task(
 ) -> actix_web::Result<impl Responder> {
     let routine_id: i32 = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
 
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let model_id = {
         use schema::routine::dsl;
@@ -124,13 +130,14 @@ async fn add_task(
 }
 
 #[get("/{routine_id}/tasks")]
+#[tracing::instrument]
 async fn routine_tasks(
     pool: web::Data<DbPool>,
     routine_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let routine_id: i32 = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
 
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let model_id = {
         use schema::routine::dsl;
@@ -156,20 +163,23 @@ async fn routine_tasks(
 }
 
 #[post("/{routine_id}/init")]
+#[tracing::instrument]
 async fn init(
     pool: web::Data<DbPool>,
     routine_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let routine_id: i32 = routine_id.into_inner().parse().map_err(ErrorBadRequest)?;
 
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let (name, model_id): (String, i32) = {
         use schema::routine::dsl;
+
         dsl::routine
             .find(routine_id)
             .select((dsl::name, dsl::model))
             .first(&connection)
+            .tap(|routine| event!(Level::TRACE, ?routine))
             .optional()
             .map_err(ErrorInternalServerError)?
             .ok_or_else(|| ErrorNotFound(format!("Routine {routine_id} not found")))?
@@ -194,6 +204,7 @@ async fn init(
             .load(&connection)
             .map_err(ErrorInternalServerError)?
     };
+    event!(Level::TRACE, ?tasks);
 
     // Insert copies of tasks
     // FIXME this is one fetch for each name
@@ -226,6 +237,7 @@ async fn init(
             Ok(new_id)
         })
         .collect::<actix_web::Result<_>>()?;
+    event!(Level::TRACE, ?new_tasks);
 
     let new_task_partof = new_tasks
         .iter()

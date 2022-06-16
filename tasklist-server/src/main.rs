@@ -7,15 +7,40 @@ use actix_web::{web, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2;
 use r2d2::ConnectionManager;
-use tracing::Level;
 use tracing_actix_web::TracingLogger;
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::Registry;
+use tracing_tree::HierarchicalLayer;
 
 mod db;
 mod routine;
 mod task;
 mod tasklist;
 
-type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+type InnerPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+
+#[derive(Clone)]
+struct DbPool(r2d2::Pool<ConnectionManager<SqliteConnection>>);
+
+impl DbPool {
+    fn build() -> Self {
+        let manager = ConnectionManager::<SqliteConnection>::new("tasklist.sqlite");
+        let pool = r2d2::Pool::builder().build(manager).unwrap();
+        Self(pool)
+    }
+}
+
+impl std::fmt::Debug for DbPool {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DbPool").finish_non_exhaustive()
+    }
+}
+
+impl AsRef<InnerPool> for DbPool {
+    fn as_ref(&self) -> &InnerPool {
+        &self.0
+    }
+}
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -25,16 +50,13 @@ fn db_connection() -> Result<SqliteConnection, ConnectionError> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
-        .compact()
-        .init();
+    let subscriber = Registry::default().with(HierarchicalLayer::new(2));
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 
     let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();
 
-    let manager = ConnectionManager::<SqliteConnection>::new("tasklist.sqlite");
-    let pool: DbPool = r2d2::Pool::builder().build(manager).unwrap();
+    let pool = DbPool::build();
 
     HttpServer::new(move || {
         App::new()

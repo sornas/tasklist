@@ -4,7 +4,7 @@ use tasklists::model;
 
 use crate::db;
 
-#[derive(Clone, Queryable)]
+#[derive(Clone, Debug, Queryable)]
 pub struct Routine {
     pub id: i32,
     pub name: String,
@@ -34,13 +34,13 @@ impl Routine {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct ModelTasklist {
     pub id: i32,
     pub routine: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct User {
     pub id: i32,
     pub name: String,
@@ -48,7 +48,7 @@ pub struct User {
     // email
 }
 
-#[derive(Clone, Queryable)]
+#[derive(Clone, Debug, Queryable)]
 pub struct RegularTasklist {
     pub id: i32,
     pub name: String,
@@ -69,7 +69,7 @@ impl RegularTasklist {
     }
 }
 
-#[derive(Clone, Queryable)]
+#[derive(Clone, Debug, Queryable)]
 pub struct Task {
     pub id: i32,
     pub name: String,
@@ -85,42 +85,42 @@ impl Task {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct RegularPartOf {
     pub _id: i32,
     pub regular: i32,
     pub task: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct Assigned {
     pub _id: i32,
     pub task: i32,
     pub user: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct ModelMember {
     pub _id: i32,
     pub tasklist: i32,
     pub user: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct RoutineMember {
     pub _id: i32,
     pub routine: i32,
     pub user: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct RegularMember {
     pub _id: i32,
     pub tasklist: i32,
     pub user: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Debug, Queryable)]
 pub struct ModelPartof {
     pub _id: i32,
     pub model: i32,
@@ -152,7 +152,7 @@ pub mod insert {
         };
     }
 
-    #[derive(Insertable)]
+    #[derive(Debug, Insertable)]
     #[table_name = "task"]
     pub struct Task {
         pub name: String,
@@ -172,7 +172,7 @@ pub mod insert {
         }
     }
 
-    #[derive(Insertable)]
+    #[derive(Debug, Insertable)]
     #[table_name = "tasklist"]
     pub struct RegularTasklist<'a> {
         pub name: &'a str,
@@ -184,7 +184,7 @@ pub mod insert {
         impl_insert!(tasklist::table);
     }
 
-    #[derive(Insertable)]
+    #[derive(Debug, Insertable)]
     #[table_name = "task_partof_regular"]
     pub struct TaskPartofRegular {
         pub regular: i32,
@@ -195,7 +195,7 @@ pub mod insert {
         impl_insert!(task_partof_regular::table);
     }
 
-    #[derive(Insertable)]
+    #[derive(Debug, Insertable)]
     #[table_name = "task_partof_model"]
     pub struct TaskPartofModel {
         pub model: i32,
@@ -206,7 +206,7 @@ pub mod insert {
         impl_insert!(task_partof_model::table);
     }
 
-    #[derive(Insertable)]
+    #[derive(Debug, Insertable)]
     #[table_name = "routine"]
     pub struct Routine<'a> {
         pub name: &'a str,
@@ -217,7 +217,7 @@ pub mod insert {
         impl_insert!(routine::table);
     }
 
-    #[derive(Insertable)]
+    #[derive(Debug, Insertable)]
     #[table_name = "model_"]
     pub struct ModelTasklist {
         pub routine: i32,

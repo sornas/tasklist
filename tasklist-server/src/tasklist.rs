@@ -7,13 +7,14 @@ use crate::db::schema;
 use crate::DbPool;
 
 #[get("/{tasklist_id}")]
+#[tracing::instrument]
 async fn get(
     pool: web::Data<DbPool>,
     tasklist_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let tasklist_id: i32 = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
 
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let tasklist = schema::tasklist::dsl::tasklist
         .find(tasklist_id)
@@ -40,8 +41,9 @@ async fn get(
 }
 
 #[get("")]
+#[tracing::instrument]
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
-    let connection = pool.get().map_err(ErrorInternalServerError)?;
+    let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     let tasklists = schema::tasklist::dsl::tasklist
         .load::<db::model::RegularTasklist>(&connection)
