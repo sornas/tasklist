@@ -2,7 +2,7 @@ use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound}
 use actix_web::{get, patch, web, HttpResponse, Responder};
 use diesel::prelude::*;
 use tap::prelude::*;
-use tasklists::command::MarkTask;
+use tasklist_lib::command::MarkTask;
 use tracing::{event, Level};
 
 use crate::db;

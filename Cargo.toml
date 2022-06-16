@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "libtasklist",
+    "tasklist-lib",
 
     # "tasklist-cli",
     "tasklist-server",

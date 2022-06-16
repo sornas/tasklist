@@ -1,6 +1,6 @@
 use color_eyre::eyre::{anyhow, Result};
 use diesel::prelude::*;
-use tasklists::model;
+use tasklist_lib::model;
 
 use crate::db;
 
@@ -128,8 +128,8 @@ pub struct ModelPartof {
 }
 
 pub mod insert {
-    use ::tasklists::model;
     use diesel::prelude::*;
+    use tasklist_lib::model;
 
     use crate::db;
 
