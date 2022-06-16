@@ -1,7 +1,11 @@
 use clap::Parser;
 use color_eyre::eyre::{anyhow, Result};
-use tasklists::model::{Repetition, State};
+use tasklist_lib::model::{Repetition, State};
 use tracing::{event, Level};
+use tracing_subscriber::filter;
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::Registry;
+use tracing_tree::HierarchicalLayer;
 
 mod http;
 // mod local;
@@ -81,10 +85,13 @@ pub enum Show {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
-        .compact()
-        .init();
+    tracing::subscriber::set_global_default(
+        Registry::default().with(
+            HierarchicalLayer::new(2)
+                .with_filter(filter::Targets::new().with_target("tasklist_cli", Level::DEBUG)),
+        ),
+    )
+    .unwrap();
 
     event!(
         Level::DEBUG,
@@ -92,7 +99,7 @@ async fn main() -> Result<()> {
         std::env::args().collect::<Vec<_>>()
     );
     let args = Args::parse();
-    event!(Level::DEBUG, "parsed args {:?}", args);
+    event!(Level::DEBUG, ?args);
 
     if args.local {
         todo!()

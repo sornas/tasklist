@@ -1,41 +1,22 @@
 use color_eyre::eyre::{anyhow, Error, Result};
-use tasklists::command;
-use tasklists::model::{Repetition, Routine, State, Task, Tasklist};
+use tap::prelude::*;
+use tasklist_lib::command;
+use tasklist_lib::model;
+use tracing::{event, Level};
 
-use crate::{parse_repetition, Args, Command, Create, Init, Mark, Remove, Show};
+use crate::{Args, Command, Create, Init, Mark, Remove, Show};
 
+#[tracing::instrument]
 pub async fn handle_args(args: &Args) -> Result<()> {
     match &args.command {
-        Command::Create(Create::Routine { name, repetition }) => {
-            let model = Tasklist {
-                state: State::NotStarted,
-                tasks: vec![],
-            };
+        Command::Create(Create::Routine {
+            name,
+            repetition: _,
+        }) => {
+            let routine = model::NewRoutine { name: name.clone() };
 
-            let model_id = reqwest::Client::new()
-                .post("http://localhost:8080/tasklist/new")
-                .json(&model)
-                .send()
-                .await?
-                .text()
-                .await?
-                .parse()?;
-
-            let repetition = repetition
-                .as_deref()
-                .map(parse_repetition)
-                .transpose()?
-                .unwrap_or(Repetition::Manual);
-
-            let routine = Routine {
-                name: name.to_string(),
-                repetition,
-                model: model_id,
-                task_lists: vec![],
-            };
-
-            let _routine = reqwest::Client::new()
-                .post("http://localhost:8080/routine/new")
+            reqwest::Client::new()
+                .post("http://localhost:8080/routines/new")
                 .json(&routine)
                 .send()
                 .await?;
@@ -43,24 +24,28 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
-        Command::Create(Create::Task { name, routine }) => {
-            let task = Task {
-                state: State::NotStarted,
-                name: name.to_string(),
-            };
+        Command::Create(Create::Task {
+            name: _,
+            routine: _,
+        }) => {
+            todo!()
+            // let task = Task {
+            //     state: State::NotStarted,
+            //     name: name.to_string(),
+            // };
 
-            let _task = reqwest::Client::new()
-                .post(format!("http://localhost:8080/routine/{routine}/task",))
-                .json(&task)
-                .send()
-                .await?;
+            // let _task = reqwest::Client::new()
+            //     .post(format!("http://localhost:8080/routine/{routine}/task",))
+            //     .json(&task)
+            //     .send()
+            //     .await?;
 
-            Ok(())
+            // Ok(())
         }
 
         Command::Init(Init { routine }) => {
-            let _tasklist = reqwest::Client::new()
-                .post(format!("http://localhost:8080/routine/{routine}/init"))
+            reqwest::Client::new()
+                .post(format!("http://localhost:8080/routines/{routine}/init"))
                 .send()
                 .await?;
 
@@ -89,7 +74,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 };
 
                 reqwest::Client::new()
-                    .patch(format!("http://localhost:8080/task/{task_id}"))
+                    .patch(format!("http://localhost:8080/tasks/{task_id}"))
                     .json(&command)
                     .send()
                     .await?;
@@ -100,7 +85,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 };
 
                 reqwest::Client::new()
-                    .patch(format!("http://localhost:8080/tasklist/{tasklist_id}"))
+                    .patch(format!("http://localhost:8080/tasklists/{tasklist_id}"))
                     .json(&command)
                     .send()
                     .await?;
@@ -111,32 +96,36 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             Ok(())
         }
 
-        Command::Remove(Remove::Task { id, from }) => {
-            reqwest::Client::new()
-                .delete(format!("http://localhost:8080/tasklist/{from}/task"))
-                .json(&id)
-                .send()
-                .await?;
-            Ok(())
+        Command::Remove(Remove::Task { id: _, from: _ }) => {
+            todo!()
+            // reqwest::Client::new()
+            //     .delete(format!("http://localhost:8080/tasklist/{from}/task"))
+            //     .json(&id)
+            //     .send()
+            //     .await?;
+            // Ok(())
         }
 
         Command::Show(Show::Routine { id: Some(id) }) => {
             let routine = reqwest::Client::new()
-                .get(format!("http://localhost:8080/routine/{id}"))
+                .get(format!("http://localhost:8080/routines/{id}"))
+                .tap(|req| event!(Level::DEBUG, ?req))
                 .send()
-                .await?
-                .json::<Routine>()
-                .await?;
+                .await
+                .tap(|resp| event!(Level::DEBUG, ?resp))?
+                .json::<model::Routine>()
+                .await
+                .tap(|body| event!(Level::DEBUG, ?body))?;
             println!("{:#?}", routine);
             Ok(())
         }
 
         Command::Show(Show::Routine { id: None }) => {
             let routines = reqwest::Client::new()
-                .get(format!("http://localhost:8080/routine"))
+                .get(format!("http://localhost:8080/routines"))
                 .send()
                 .await?
-                .json::<Vec<Routine>>()
+                .json::<Vec<model::Routine>>()
                 .await?;
             println!("{:#?}", routines);
             Ok(())
@@ -144,10 +133,10 @@ pub async fn handle_args(args: &Args) -> Result<()> {
 
         Command::Show(Show::Task { id }) => {
             let task = reqwest::Client::new()
-                .get(format!("http://localhost:8080/task/{id}"))
+                .get(format!("http://localhost:8080/tasks/{id}"))
                 .send()
                 .await?
-                .json::<Task>()
+                .json::<model::Task>()
                 .await?;
             println!("{:#?}", task);
             Ok(())
@@ -158,35 +147,37 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             follow_tasks,
         }) => {
             let tasklist = reqwest::Client::new()
-                .get(format!("http://localhost:8080/tasklist/{id}"))
+                .get(format!("http://localhost:8080/tasklists/{id}"))
                 .send()
                 .await?
-                .json::<Tasklist>()
+                .json::<model::Tasklist>()
                 .await?;
             if *follow_tasks {
-                let Tasklist {
+                let model::Tasklist {
+                    id,
+                    name,
                     state,
                     tasks: tasklist_tasks,
                 } = tasklist;
                 let client = reqwest::Client::new();
-                // https://github.com/rust-lang/rust/issues/62290
+                // https://github.com/rust-lang/rust/issues/62290: async closure
                 let mut tasks = Vec::new();
                 for id in tasklist_tasks.iter() {
                     tasks.push(
                         async {
                             Result::<_, Error>::Ok(
                                 client
-                                    .get(format!("http://localhost:8080/task/{id}"))
+                                    .get(format!("http://localhost:8080/tasks/{id}"))
                                     .send()
                                     .await?
-                                    .json::<Task>()
+                                    .json::<model::Task>()
                                     .await?,
                             )
                         }
                         .await,
                     );
                 }
-                println!("{:?}", state);
+                println!("[{id}] {name} ({state:?})");
                 println!(
                     "{:#?}",
                     tasks
@@ -211,10 +202,10 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 return Err(anyhow!("not following tasks when showing all tasklists"));
             }
             let tasklists = reqwest::Client::new()
-                .get(format!("http://localhost:8080/tasklist"))
+                .get(format!("http://localhost:8080/tasklists"))
                 .send()
                 .await?
-                .json::<Vec<Tasklist>>()
+                .json::<Vec<model::Tasklist>>()
                 .await?;
             println!("{:#?}", tasklists);
             Ok(())
