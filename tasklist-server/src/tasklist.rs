@@ -1,8 +1,6 @@
-use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
+use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::{get, web, HttpResponse, Responder};
-use diesel::prelude::*;
 use tasklist_lib::db;
-use tasklist_lib::db::schema;
 
 use crate::DbPool;
 
@@ -13,31 +11,12 @@ async fn get(
     tasklist_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let tasklist_id: i32 = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
-
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
-    let tasklist = schema::tasklist::dsl::tasklist
-        .find(tasklist_id)
-        .first::<db::model::RegularTasklist>(&connection)
-        .optional()
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound(format!("Tasklist {tasklist_id} not found")))?;
+    let tasklist = db::tasklists::tasklist_by_id(&connection, tasklist_id)
+        .map_err(ErrorInternalServerError)?;
 
-    let tasks = {
-        use schema::task_partof_regular::dsl;
-        dsl::task_partof_regular
-            .filter(dsl::regular.eq(tasklist.id))
-            .select(dsl::task)
-            .load::<i32>(&connection)
-            .map_err(ErrorInternalServerError)?
-    };
-
-    Ok(HttpResponse::Ok().json(
-        &tasklist
-            .clone()
-            .to_model(tasks)
-            .map_err(ErrorInternalServerError)?,
-    ))
+    Ok(HttpResponse::Ok().json(&tasklist))
 }
 
 #[get("")]
@@ -45,25 +24,8 @@ async fn get(
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
-    let tasklists = schema::tasklist::dsl::tasklist
-        .load::<db::model::RegularTasklist>(&connection)
-        .map_err(ErrorInternalServerError)?
-        .iter()
-        .map(|tasklist| {
-            let tasks = {
-                use schema::task_partof_regular::dsl;
-                dsl::task_partof_regular
-                    .filter(dsl::regular.eq(tasklist.id))
-                    .select(dsl::task)
-                    .load::<i32>(&connection)
-                    .map_err(ErrorInternalServerError)?
-            };
-            tasklist
-                .clone()
-                .to_model(tasks)
-                .map_err(ErrorInternalServerError)
-        })
-        .collect::<actix_web::Result<Vec<_>>>()?;
+    let tasklists = db::tasklists::all_tasklists(&connection).map_err(ErrorInternalServerError)?;
+
     Ok(HttpResponse::Ok().json(&tasklists))
 }
 

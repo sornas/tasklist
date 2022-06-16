@@ -7,7 +7,9 @@ use actix_web::{web, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2;
 use r2d2::ConnectionManager;
+use tracing::Level;
 use tracing_actix_web::TracingLogger;
+use tracing_subscriber::filter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::Registry;
 use tracing_tree::HierarchicalLayer;
@@ -49,8 +51,16 @@ fn db_connection() -> Result<SqliteConnection, ConnectionError> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let subscriber = Registry::default().with(HierarchicalLayer::new(2));
-    tracing::subscriber::set_global_default(subscriber).unwrap();
+    tracing::subscriber::set_global_default(
+        Registry::default().with(
+            HierarchicalLayer::new(2).with_filter(
+                filter::Targets::new()
+                    .with_target("tasklist_server", Level::TRACE)
+                    .with_target("", Level::DEBUG),
+            ),
+        ),
+    )
+    .unwrap();
 
     let connection = db_connection().unwrap();
     embedded_migrations::run_with_output(&connection, &mut std::io::stdout()).unwrap();

@@ -1567,6 +1567,7 @@ dependencies = [
  "diesel",
  "serde",
  "serde_json",
+ "tap",
  "tracing",
 ]
 
