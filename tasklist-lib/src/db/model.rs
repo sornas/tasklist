@@ -1,8 +1,8 @@
 use color_eyre::eyre::{anyhow, Result};
 use diesel::prelude::*;
-use tasklist_lib::model;
 
 use crate::db;
+use crate::model;
 
 #[derive(Clone, Debug, Queryable)]
 pub struct Routine {
@@ -129,9 +129,9 @@ pub struct ModelPartof {
 
 pub mod insert {
     use diesel::prelude::*;
-    use tasklist_lib::model;
 
     use crate::db;
+    use crate::model;
 
     use db::schema::model as model_;
     use db::schema::*;

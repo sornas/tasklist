@@ -1208,6 +1208,7 @@ name = "tasklist-lib"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "diesel",
  "serde",
  "serde_json",
  "tracing",

@@ -1,9 +1,9 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::{get, web, HttpResponse, Responder};
 use diesel::prelude::*;
+use tasklist_lib::db;
+use tasklist_lib::db::schema;
 
-use crate::db;
-use crate::db::schema;
 use crate::DbPool;
 
 #[get("/{tasklist_id}")]

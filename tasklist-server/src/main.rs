@@ -1,4 +1,4 @@
-#[macro_use]
+// #[macro_use]
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
@@ -12,7 +12,6 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::Registry;
 use tracing_tree::HierarchicalLayer;
 
-mod db;
 mod routine;
 mod task;
 mod tasklist;

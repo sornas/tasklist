@@ -2,11 +2,11 @@ use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound}
 use actix_web::{get, post, web, HttpResponse, Responder};
 use diesel::prelude::*;
 use tap::prelude::*;
+use tasklist_lib::db;
+use tasklist_lib::db::schema;
 use tasklist_lib::model;
 use tracing::{event, Level};
 
-use crate::db;
-use crate::db::schema;
 use crate::DbPool;
 
 #[get("")]

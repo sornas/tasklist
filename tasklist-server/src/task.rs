@@ -3,10 +3,10 @@ use actix_web::{get, patch, web, HttpResponse, Responder};
 use diesel::prelude::*;
 use tap::prelude::*;
 use tasklist_lib::command::MarkTask;
+use tasklist_lib::db;
+use tasklist_lib::db::schema::task::dsl;
 use tracing::{event, Level};
 
-use crate::db;
-use crate::db::schema::task::dsl;
 use crate::DbPool;
 
 #[get("/{task_id}")]
