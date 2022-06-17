@@ -1563,6 +1563,7 @@ dependencies = [
 name = "tasklist-lib"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "color-eyre",
  "diesel",
  "serde",

@@ -1,4 +1,4 @@
-use color_eyre::eyre::{anyhow, Result};
+use actix_web::error::{ErrorInternalServerError, ErrorNotFound, Result};
 use diesel::prelude::*;
 use tap::prelude::*;
 use tracing::{event, Level};
@@ -11,7 +11,8 @@ use db::schema;
 #[tracing::instrument(skip(connection))]
 pub fn all_tasklists(connection: &SqliteConnection) -> Result<Vec<model::Tasklist>> {
     schema::tasklist::dsl::tasklist
-        .load::<db::model::RegularTasklist>(connection)?
+        .load::<db::model::RegularTasklist>(connection)
+        .map_err(ErrorInternalServerError)?
         .iter()
         .map(|tasklist| {
             let tasks = {
@@ -19,9 +20,13 @@ pub fn all_tasklists(connection: &SqliteConnection) -> Result<Vec<model::Tasklis
                 dsl::task_partof_regular
                     .filter(dsl::regular.eq(tasklist.id))
                     .select(dsl::task)
-                    .load::<i32>(connection)?
+                    .load::<i32>(connection)
+                    .map_err(ErrorInternalServerError)?
             };
-            tasklist.clone().to_model(tasks)
+            tasklist
+                .clone()
+                .to_model(tasks)
+                .map_err(ErrorInternalServerError)
         })
         .collect()
 }
@@ -32,15 +37,17 @@ pub fn tasklist_by_id(connection: &SqliteConnection, id: i32) -> Result<model::T
         .find(id)
         .first::<db::model::RegularTasklist>(connection)
         .tap(|tasklist| event!(Level::DEBUG, ?tasklist))
-        .optional()?
-        .ok_or_else(|| anyhow!("Tasklist {id} not found"))?;
+        .optional()
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(format!("Tasklist {id} not found")))?;
 
     let tasks = {
         use schema::task_partof_regular::dsl;
         dsl::task_partof_regular
             .filter(dsl::regular.eq(tasklist.id))
             .select(dsl::task)
-            .load::<i32>(connection)?
+            .load::<i32>(connection)
+            .map_err(ErrorInternalServerError)?
     };
-    tasklist.to_model(tasks)
+    tasklist.to_model(tasks).map_err(ErrorInternalServerError)
 }
