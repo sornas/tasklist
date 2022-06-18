@@ -19,7 +19,8 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .post("http://localhost:8080/routines/new")
                 .json(&routine)
                 .send()
-                .await?;
+                .await?
+                .error_for_status()?;
 
             Ok(())
         }
@@ -47,7 +48,8 @@ pub async fn handle_args(args: &Args) -> Result<()> {
             reqwest::Client::new()
                 .post(format!("http://localhost:8080/routines/{routine}/init"))
                 .send()
-                .await?;
+                .await?
+                .error_for_status()?;
 
             Ok(())
         }
@@ -77,7 +79,8 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                     .patch(format!("http://localhost:8080/tasks/{task_id}"))
                     .json(&command)
                     .send()
-                    .await?;
+                    .await?
+                    .error_for_status()?;
             } else if let Some(tasklist_id) = tasklist {
                 let command = command::MarkTasklist {
                     state: Some(state.clone()),
@@ -88,7 +91,8 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                     .patch(format!("http://localhost:8080/tasklists/{tasklist_id}"))
                     .json(&command)
                     .send()
-                    .await?;
+                    .await?
+                    .error_for_status()?;
             } else {
                 unreachable!();
             }
@@ -113,6 +117,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .send()
                 .await
                 .tap(|resp| event!(Level::DEBUG, ?resp))?
+                .error_for_status()?
                 .json::<model::Routine>()
                 .await
                 .tap(|body| event!(Level::DEBUG, ?body))?;
@@ -125,6 +130,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .get(format!("http://localhost:8080/routines"))
                 .send()
                 .await?
+                .error_for_status()?
                 .json::<Vec<model::Routine>>()
                 .await?;
             println!("{:#?}", routines);
@@ -136,6 +142,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .get(format!("http://localhost:8080/tasks/{id}"))
                 .send()
                 .await?
+                .error_for_status()?
                 .json::<model::Task>()
                 .await?;
             println!("{:#?}", task);
@@ -150,6 +157,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .get(format!("http://localhost:8080/tasklists/{id}"))
                 .send()
                 .await?
+                .error_for_status()?
                 .json::<model::Tasklist>()
                 .await?;
             if *follow_tasks {
@@ -170,6 +178,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                                     .get(format!("http://localhost:8080/tasks/{id}"))
                                     .send()
                                     .await?
+                                    .error_for_status()?
                                     .json::<model::Task>()
                                     .await?,
                             )
@@ -205,6 +214,7 @@ pub async fn handle_args(args: &Args) -> Result<()> {
                 .get(format!("http://localhost:8080/tasklists"))
                 .send()
                 .await?
+                .error_for_status()?
                 .json::<Vec<model::Tasklist>>()
                 .await?;
             println!("{:#?}", tasklists);
