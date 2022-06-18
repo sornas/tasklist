@@ -3,7 +3,9 @@ use diesel::prelude::*;
 pub mod model;
 pub mod schema;
 
-pub mod tasklists;
+pub mod routine;
+pub mod task;
+pub mod tasklist;
 
 pub fn last_insert_rowid(connection: &SqliteConnection) -> QueryResult<i32> {
     no_arg_sql_function!(

@@ -13,7 +13,7 @@ async fn get(
     let tasklist_id: i32 = tasklist_id.into_inner().parse().map_err(ErrorBadRequest)?;
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
-    let tasklist = db::tasklists::tasklist_by_id(&connection, tasklist_id)?;
+    let tasklist = db::tasklist::tasklist_by_id(&connection, tasklist_id)?;
 
     Ok(HttpResponse::Ok().json(&tasklist))
 }
@@ -23,7 +23,7 @@ async fn get(
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
-    let tasklists = db::tasklists::all_tasklists(&connection)?;
+    let tasklists = db::tasklist::all_tasklists(&connection)?;
 
     Ok(HttpResponse::Ok().json(&tasklists))
 }

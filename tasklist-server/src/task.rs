@@ -1,11 +1,7 @@
-use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
+use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::{get, patch, web, HttpResponse, Responder};
-use diesel::prelude::*;
-use tap::prelude::*;
 use tasklist_lib::command::MarkTask;
 use tasklist_lib::db;
-use tasklist_lib::db::schema::task::dsl;
-use tracing::{event, Level};
 
 use crate::DbPool;
 
@@ -16,32 +12,16 @@ async fn get(
     task_id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let task_id: i32 = task_id.into_inner().parse().map_err(ErrorBadRequest)?;
-
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
-
-    let task = dsl::task
-        .find(task_id)
-        .first::<db::model::Task>(&connection)
-        .optional()
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound(format!("Task {task_id} not found")))?;
-    event!(Level::DEBUG, ?task);
-
-    Ok(HttpResponse::Ok().json(task.clone().to_model().map_err(ErrorInternalServerError)?))
+    let task = db::task::task_by_id(&connection, task_id)?;
+    Ok(HttpResponse::Ok().json(&task))
 }
 
 #[get("")]
 #[tracing::instrument]
 async fn list(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
-
-    let tasks = dsl::task
-        .load::<db::model::Task>(&connection)
-        .tap(|tasks| event!(Level::DEBUG, ?tasks))
-        .map_err(ErrorInternalServerError)?
-        .iter()
-        .map(|task| task.clone().to_model().map_err(ErrorInternalServerError))
-        .collect::<actix_web::Result<Vec<_>>>()?;
+    let tasks = db::task::all_tasks(&connection)?;
     Ok(HttpResponse::Ok().json(&tasks))
 }
 
@@ -52,21 +32,13 @@ async fn put(
     mut command: web::Json<MarkTask>,
 ) -> actix_web::Result<impl Responder> {
     let task_id: i32 = task_id.into_inner().parse().map_err(ErrorBadRequest)?;
-    // TODO verify that task id exists
-
     let connection = pool.0.get().map_err(ErrorInternalServerError)?;
 
     if let Some(state) = command.state.take() {
-        diesel::update(dsl::task.find(task_id))
-            .set(dsl::state.eq(state.to_string()))
-            .execute(&connection)
-            .map_err(|_| ErrorNotFound(format!("Task {task_id} not found")))?;
+        db::task::set_task_state(&connection, task_id, &state.to_string())?;
     }
     if let Some(name) = command.name.take() {
-        diesel::update(dsl::task.find(task_id))
-            .set(dsl::name.eq(name))
-            .execute(&connection)
-            .map_err(|_| ErrorNotFound(format!("Task {task_id} not found")))?;
+        db::task::set_task_name(&connection, task_id, &name)?;
     }
 
     Ok(HttpResponse::Ok())
