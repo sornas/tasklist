@@ -1,7 +1,7 @@
 <template>
   <n-config-provider :theme="darkTheme">
-    <n-space >
-      <n-layout has-sider style="height: 100vh; display: flex; flex-direction: column;">
+    <n-message-provider>
+      <n-layout v-if="windowWidth > 768" has-sider style="height: 100vh; display: flex; flex-direction: column;">
         <n-layout-sider 
           bordered
           collapse-mode="width"
@@ -20,13 +20,16 @@
             :options="menuOptions"
           />
         </n-layout-sider>
-        <n-layout style="display: flex; flex: 1 0 auto;">
-          <span>
+        <n-layout>
+          <span style="display: flex; flex-direction: column; padding: 2rem;">
             <router-view/>
           </span>
         </n-layout>
       </n-layout>
-    </n-space>
+      <span v-else style="display: flex; flex-direction: column; padding: 2rem;">
+        <router-view/>
+      </span>
+    </n-message-provider>
     <n-global-style />
   </n-config-provider>
 </template>
@@ -35,31 +38,79 @@
 import { darkTheme } from 'naive-ui';
 import { h, ref } from 'vue';
 import { NIcon } from 'naive-ui'
-import { BookOutline } from "@vicons/ionicons5"
+import { ArchiveOutlined, AssignmentOutlined, AutorenewOutlined, HomeOutlined, PermIdentityOutlined } from "@vicons/material"
+import { RouterLink } from "vue-router"
 
 function renderIcon(icon) {
   return () => h(NIcon, null, { default: () => h(icon) });
 }
 
-const menuOptions = [
+const routines = [
   {
-    label: "Home",
-    key: "home",
-    icon: renderIcon(BookOutline)
+    label: "Example routine 1",
+    key: "exr1",
   },
   {
-    label: "Not Home",
-    key: "nothome",
-    icon: renderIcon(BookOutline)
+    label: "Example routine 2",
+    key: "exr2",
+  }
+]
+
+const menuOptions = [
+  {
+    label: () => h(RouterLink, {
+      to: {
+        name: "home"
+      }
+    }, { default: () => "Home" }),
+    key: "home",
+    icon: renderIcon(HomeOutlined)
+  },
+  {
+    label: "Routines",
+    key: "routines",
+    icon: renderIcon(AutorenewOutlined),
+    children: routines
+  },
+  {
+    label: "Unfinished tasks",
+    key: "tasks",
+    icon: renderIcon(AssignmentOutlined)
+  },
+  {
+    label: () => h(RouterLink, {
+      to: {
+        name: "archive"
+      }
+    }, { default: () => "Archive" }),
+    key: "archive",
+    icon: renderIcon(ArchiveOutlined)
+  },
+  {
+    label: "Profile",
+    key: "routines",
+    icon: renderIcon(PermIdentityOutlined)
   }
 ]
 
 export default {
+  created() {
+    window.addEventListener("resize", this.changeWindowSize)
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.changeWindowSize);
+  },
+  methods: {
+    changeWindowSize() {
+      this.windowWidth = window.innerWidth;
+    }
+  },
   setup() {
     return {
       darkTheme,
       activeKey: ref(null),
-      collapsed: ref(null),
+      collapsed: ref(true),
+      windowWidth: ref(window.innerWidth),
       menuOptions
     }
   }
